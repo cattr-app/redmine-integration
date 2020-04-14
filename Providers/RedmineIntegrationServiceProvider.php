@@ -26,6 +26,9 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
         'item.edit.task' => [
             'Modules\RedmineIntegration\Listeners\IntegrationObserver@taskEdition',
         ],
+        'item.remove.task' => [
+            'Modules\RedmineIntegration\Listeners\IntegrationObserver@taskDeletion',
+        ],
         'answer.success.item.list.result.task' => [
             'Modules\RedmineIntegration\Listeners\IntegrationObserver@taskList',
         ],
