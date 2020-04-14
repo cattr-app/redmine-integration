@@ -110,6 +110,22 @@ class IntegrationObserver
     }
 
     /**
+     * Observe task deletion
+     *
+     * @param $task
+     *
+     * @return mixed
+     */
+    public function taskDeletion($task)
+    {
+        if ($this->taskRepo->getRedmineTaskId($task->id)) {
+            abort(403, 'Access denied to delete a task from Redmine integration');
+        }
+
+        return $task;
+    }
+
+    /**
      * Observe task list
      *
      * @param Collection|Paginator $tasks
