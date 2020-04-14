@@ -65,7 +65,7 @@ class TaskRepository
             ->update(['value' => 0]);
 
         Property::where([
-            'enitity_id' => $taskId,
+            'entity_id' => $taskId,
             'entity_type' => Property::TASK_CODE,
             'name' => 'NEW'
         ])->update(['value' => 0]);
