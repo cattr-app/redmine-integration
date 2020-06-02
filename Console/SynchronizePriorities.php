@@ -5,7 +5,7 @@ namespace Modules\RedmineIntegration\Console;
 use Exception;
 use Illuminate\Console\Command;
 use Log;
-use Modules\RedmineIntegration\Entities\ClientFactoryException;
+use Modules\RedmineIntegration\Exceptions\ClientFactoryException;
 use Modules\RedmineIntegration\Models\Priority;
 
 class SynchronizePriorities extends Command

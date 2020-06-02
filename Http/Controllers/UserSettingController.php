@@ -21,9 +21,8 @@ use Throwable;
 /**
  * Class RedmineSettingsController
  */
-class RedmineSettingsController extends AbstractRedmineController
+class UserSettingController extends AbstractRedmineController
 {
-
     use ValidatesRequests;
 
     protected Request $request;
@@ -50,8 +49,8 @@ class RedmineSettingsController extends AbstractRedmineController
     public static function getControllerRules(): array
     {
         return [
-            'updateSettings' => 'integration.redmine',
-            'getSettings' => 'integration.redmine',
+            'update' => 'integration.redmine',
+            'index' => 'integration.redmine',
             'getInternalPriorities' => 'integration.redmine',
         ];
     }
@@ -59,7 +58,7 @@ class RedmineSettingsController extends AbstractRedmineController
     /**
      * Update user's redmine settings
      */
-    public function updateSettings(Request $request, UserRepository $userRepository): JsonResponse
+    public function update(Request $request, UserRepository $userRepository): JsonResponse
     {
         $request = Filter::process('request.redmine.settings.update', $request);
         try {
@@ -134,8 +133,7 @@ class RedmineSettingsController extends AbstractRedmineController
     /**
      * @param $name
      * @param $value
-     *
-     * @return RedmineSettingsController
+     * @return SettingController
      */
     protected function saveProperty($name, $value): self
     {
@@ -155,22 +153,24 @@ class RedmineSettingsController extends AbstractRedmineController
 
     /**
      * Returns user's redmine settings
+     *
+     * @param Request $request
+     * @param UserRepository $userRepository
+     * @return JsonResponse
      */
-    public function getSettings(Request $request, UserRepository $userRepository): JsonResponse
+    public function index(Request $request, UserRepository $userRepository): JsonResponse
     {
         $userId = auth()->user()->id;
         $apiKey = $userRepository->getUserRedmineApiKey($userId);
         $hiddenKey = (bool)$apiKey ? preg_replace('/^(.{4}).*(.{4})$/i', '$1 ********* $2', $apiKey) : $apiKey;
 
-        $settingsArray = [
-            'enabled' => (bool)$this->settings->getEnabled(),
-            'redmine_api_key' => $hiddenKey
+        $settings = [
+            'enabled' => $this->settings->isEnabled(),
+            'api_key' => $hiddenKey
         ];
-        return new JsonResponse($settingsArray);
-    }
-
-    public function getInternalPriorities(): JsonResponse
-    {
-        return new JsonResponse(Priority::all());
+        return new JsonResponse([
+            'success' => true,
+            'data' => $settings,
+        ]);
     }
 }

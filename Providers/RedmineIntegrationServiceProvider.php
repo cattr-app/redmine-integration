@@ -63,6 +63,11 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
             ValidateSignature::class
         );
 
+        $this->app->bind(
+            \App\Models\Setting::class,
+            \Modules\RedmineIntegration\Models\Setting::class
+        );
+
         parent::boot();
     }
 

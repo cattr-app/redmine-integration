@@ -44,5 +44,4 @@ class TimeActivity extends Model
     {
         return $this->belongsTo(TimeInterval::class, 'time_interval_id');
     }
-
 }

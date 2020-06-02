@@ -1,23 +1,26 @@
 <?php
 
-namespace Modules\RedmineIntegration\Models;
+namespace Modules\RedmineIntegration\Services;
 
 use Illuminate\Support\Arr;
-use Modules\RedmineIntegration\Entities\ClientFactoryException;
+use Modules\RedmineIntegration\Exceptions\ClientFactoryException;
+use Modules\RedmineIntegration\Models\ClientFactory;
 
-class Status extends CompanyProperty
+class StatusService
 {
-    protected const REDMINE_STATUSES = 'redmine_statuses';
-    protected const REDMINE_ACTIVE_STATUS = 'redmine_active_status';
-    protected const REDMINE_INACTIVE_STATUS = 'redmine_inactive_status';
-    protected const REDMINE_ACTIVATE_ON_STATUSES = 'redmine_activate_on_statuses';
-    protected const REDMINE_DEACTIVATE_ON_STATUSES = 'redmine_deactivate_on_statuses';
+    protected const REDMINE_STATUSES = 'statuses';
+    protected const REDMINE_ACTIVE_STATUS = 'active_status';
+    protected const REDMINE_INACTIVE_STATUS = 'inactive_status';
+    protected const REDMINE_ACTIVATE_ON_STATUSES = 'activate_on_statuses';
+    protected const REDMINE_DEACTIVATE_ON_STATUSES = 'deactivate_on_statuses';
 
     protected ClientFactory $clientFactory;
+    protected SettingsService $settings;
 
-    public function __construct(ClientFactory $clientFactory)
+    public function __construct(ClientFactory $clientFactory, SettingsService $settings)
     {
         $this->clientFactory = $clientFactory;
+        $this->settings = $settings;
     }
 
     public function existsByID(int $id): bool
@@ -34,9 +37,7 @@ class Status extends CompanyProperty
 
     public function getAll(): array
     {
-        $property = $this->get(static::REDMINE_STATUSES);
-
-        return isset($property) ? (json_decode($property->value, true) ?: []) : [];
+        return $this->settings->get(static::REDMINE_STATUSES, []);
     }
 
     public function add(int $id, string $name, bool $isActive, bool $isClosed): void
@@ -54,55 +55,47 @@ class Status extends CompanyProperty
 
     public function setAll(array $value): void
     {
-        $this->set(static::REDMINE_STATUSES, json_encode($value));
+        $this->settings->set(static::REDMINE_STATUSES, $value);
     }
 
     public function getActiveStatusID(): int
     {
-        $property = $this->get(static::REDMINE_ACTIVE_STATUS);
-
-        return isset($property) ? $property->value : 0;
+        return $this->settings->get(static::REDMINE_ACTIVE_STATUS, 0);
     }
 
-    public function setActiveStatusID(int $value): void
+    public function setActiveStatusID(int $value): int
     {
-        $this->set(static::REDMINE_ACTIVE_STATUS, $value);
+        return $this->settings->set(static::REDMINE_ACTIVE_STATUS, $value);
     }
 
     public function getInactiveStatusID(): int
     {
-        $property = $this->get(static::REDMINE_INACTIVE_STATUS);
-
-        return isset($property) ? $property->value : 0;
+        return $this->settings->get(static::REDMINE_INACTIVE_STATUS, 0);
     }
 
-    public function setInactiveStatusID(int $value): void
+    public function setInactiveStatusID(int $value): int
     {
-        $this->set(static::REDMINE_INACTIVE_STATUS, $value);
+        return $this->settings->set(static::REDMINE_INACTIVE_STATUS, $value);
     }
 
     public function getActivateOnStatuses(): array
     {
-        $property = $this->get(static::REDMINE_ACTIVATE_ON_STATUSES);
-
-        return isset($property) ? (json_decode($property->value, true) ?: []) : [];
+        return $this->settings->get(static::REDMINE_ACTIVATE_ON_STATUSES, []);
     }
 
-    public function setActivateOnStatuses(array $value): void
+    public function setActivateOnStatuses(array $value): array
     {
-        $this->set(static::REDMINE_ACTIVATE_ON_STATUSES, json_encode($value));
+        return $this->settings->set(static::REDMINE_ACTIVATE_ON_STATUSES, $value);
     }
 
     public function getDeactivateOnStatuses(): array
     {
-        $property = $this->get(static::REDMINE_DEACTIVATE_ON_STATUSES);
-
-        return isset($property) ? (json_decode($property->value, true) ?: []) : [];
+        return $this->settings->get(static::REDMINE_DEACTIVATE_ON_STATUSES, []);
     }
 
-    public function setDeactivateOnStatuses(array $value): void
+    public function setDeactivateOnStatuses(array $value): array
     {
-        $this->set(static::REDMINE_DEACTIVATE_ON_STATUSES, json_encode($value));
+        return $this->settings->set(static::REDMINE_DEACTIVATE_ON_STATUSES, $value);
     }
 
     /**

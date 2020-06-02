@@ -4,17 +4,20 @@ namespace Modules\RedmineIntegration\Models;
 
 use App\Models\Priority as PriorityModel;
 use Illuminate\Support\Arr;
-use Modules\RedmineIntegration\Entities\ClientFactoryException;
+use Modules\RedmineIntegration\Exceptions\ClientFactoryException;
+use Modules\RedmineIntegration\Services\SettingsService;
 
 class Priority extends CompanyProperty
 {
-    protected const REDMINE_PRIORITIES = 'redmine_priorities';
+    protected const REDMINE_PRIORITIES = 'priorities';
 
     protected ClientFactory $clientFactory;
+    protected SettingsService $settings;
 
-    public function __construct(ClientFactory $clientFactory)
+    public function __construct(ClientFactory $clientFactory, SettingsService $settings)
     {
         $this->clientFactory = $clientFactory;
+        $this->settings = $settings;
     }
 
     /**
@@ -24,7 +27,7 @@ class Priority extends CompanyProperty
     {
         $client = $this->clientFactory->createCompanyClient();
         $redminePriorities = $client->issue_priority->all()['issue_priorities'];
-        $savedPriorities = $this->getAll();
+        $savedPriorities = $this->settings->getPriorities();
 
         // Merge priorities info from the redmine with the stored priorities
         $priorities = array_map(static function (array $priority) use ($savedPriorities) {
@@ -50,18 +53,6 @@ class Priority extends CompanyProperty
             return $priority;
         }, $redminePriorities);
 
-        $this->setAll($priorities);
-    }
-
-    public function getAll(): array
-    {
-        $property = $this->get(static::REDMINE_PRIORITIES);
-
-        return isset($property) ? (json_decode($property->value, true) ?: []) : [];
-    }
-
-    public function setAll(array $value): void
-    {
-        $this->set(static::REDMINE_PRIORITIES, json_encode($value));
+        $this->settings->setPriorities($priorities);
     }
 }

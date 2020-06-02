@@ -2,27 +2,29 @@
 
 namespace Modules\RedmineIntegration\Models;
 
-use Modules\RedmineIntegration\Entities\ClientFactoryException;
+use Modules\RedmineIntegration\Exceptions\ClientFactoryException;
 use Modules\RedmineIntegration\Entities\Repositories\UserRepository;
+use Modules\RedmineIntegration\Services\SettingsService;
 use Redmine\Client;
 
 class ClientFactory
 {
-    protected Settings $settings;
+    protected SettingsService $settings;
     protected UserRepository $userRepository;
 
-    public function __construct(Settings $settings, UserRepository $userRepository)
+    public function __construct(SettingsService $settings, UserRepository $userRepository)
     {
         $this->settings = $settings;
         $this->userRepository = $userRepository;
     }
 
     /**
+     * @return Client
      * @throws ClientFactoryException
      */
     public function createCompanyClient(): Client
     {
-        $url = $this->settings->getURL();
+        $url = $this->settings->getUrl();
         if (empty($url)) {
             throw new ClientFactoryException(
                 'Redmine URL is not set in the company settings. Please contact your administrator',
@@ -30,7 +32,7 @@ class ClientFactory
             );
         }
 
-        $key = $this->settings->getAPIKey();
+        $key = $this->settings->getApiKey();
         if (empty($key)) {
             throw new ClientFactoryException('Empty API key', 404);
         }
@@ -39,11 +41,14 @@ class ClientFactory
     }
 
     /**
+     * @param int $userID
+     * @param string|null $key
+     * @return Client
      * @throws ClientFactoryException
      */
     public function createUserClient(int $userID, string $key = null): Client
     {
-        $url = $this->settings->getURL();
+        $url = $this->settings->getUrl();
         if (empty($url)) {
             throw new ClientFactoryException('Empty URL', 404);
         }

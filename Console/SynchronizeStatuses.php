@@ -5,8 +5,8 @@ namespace Modules\RedmineIntegration\Console;
 use Exception;
 use Illuminate\Console\Command;
 use Log;
-use Modules\RedmineIntegration\Entities\ClientFactoryException;
-use Modules\RedmineIntegration\Models\Status;
+use Modules\RedmineIntegration\Exceptions\ClientFactoryException;
+use Modules\RedmineIntegration\Services\StatusService ;
 
 class SynchronizeStatuses extends Command
 {
@@ -25,16 +25,16 @@ class SynchronizeStatuses extends Command
     protected $description = 'Synchronize statuses from redmine.';
 
     /**
-     * @var Status
+     * @var StatusService
      */
     protected $status;
 
     /**
      * Create a new command instance.
      *
-     * @param Status $status
+     * @param StatusService $status
      */
-    public function __construct(Status $status)
+    public function __construct(StatusService $status)
     {
         parent::__construct();
 
