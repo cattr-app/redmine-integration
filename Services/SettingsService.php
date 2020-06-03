@@ -54,7 +54,7 @@ class SettingsService
      */
     public function set($key, $value = null)
     {
-        return $this->settings->get(self::MODULE_NAME, $key, $value);
+        return $this->settings->set(self::MODULE_NAME, $key, $value);
     }
 
     /**
@@ -102,15 +102,15 @@ class SettingsService
     /**
      * @return string
      */
-    public function getApiKey(): string
+    public function getApiKey(): ?string
     {
-        return $this->get('url');
+        return $this->get('api_key', null);
     }
 
     /**
      * @return string
      */
-    public function getUrl(): string
+    public function getUrl(): ?string
     {
         return $this->get('url', null);
     }
