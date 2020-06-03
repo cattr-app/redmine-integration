@@ -8,6 +8,8 @@ class Setting extends SettingModel
 {
     protected $casts = [
         'value' => 'string',
+        'url' => 'string',
+        'api_key' => 'string',
         'sync' => 'bool',
         'enabled' => 'bool',
         'statuses' => 'json',
