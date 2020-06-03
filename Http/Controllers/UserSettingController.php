@@ -38,20 +38,19 @@ class UserSettingController extends AbstractRedmineController
 
     public function __construct(Request $request, Settings $settings, ClientFactory $clientFactory)
     {
+        parent::__construct();
+
         $this->request = $request;
         $this->settings = $settings;
         $this->user = auth()->user();
         $this->clientFactory = $clientFactory;
-
-        parent::__construct();
     }
 
     public static function getControllerRules(): array
     {
         return [
-            'update' => 'integration.redmine',
             'index' => 'integration.redmine',
-            'getInternalPriorities' => 'integration.redmine',
+            'update' => 'integration.redmine',
         ];
     }
 
