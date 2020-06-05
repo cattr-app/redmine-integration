@@ -19,7 +19,20 @@ class SettingController extends AbstractRedmineController
      */
     public function __construct(SettingsService $settings)
     {
+        parent::__construct();
+
         $this->settings = $settings;
+    }
+
+    /**
+     * @return array
+     */
+    public static function getControllerRules(): array
+    {
+        return [
+            'index' => 'integration.redmine-settings',
+            'update' => 'integration.redmine-settings',
+        ];
     }
 
     /**

@@ -11,11 +11,10 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 use Modules\RedmineIntegration\Entities\Repositories\UserRepository;
 use Modules\RedmineIntegration\Models\ClientFactory;
 use Modules\RedmineIntegration\Models\Settings;
+use Modules\RedmineIntegration\Services\SettingsService;
 use Throwable;
 
 /**
@@ -26,7 +25,7 @@ class UserSettingController extends AbstractRedmineController
     use ValidatesRequests;
 
     protected Request $request;
-    protected Settings $settings;
+    protected SettingsService $settings;
 
     /**
      * @var User|Authenticatable
@@ -36,7 +35,7 @@ class UserSettingController extends AbstractRedmineController
     protected ClientFactory $clientFactory;
 
 
-    public function __construct(Request $request, Settings $settings, ClientFactory $clientFactory)
+    public function __construct(Request $request, SettingsService $settings, ClientFactory $clientFactory)
     {
         parent::__construct();
 
@@ -46,6 +45,9 @@ class UserSettingController extends AbstractRedmineController
         $this->clientFactory = $clientFactory;
     }
 
+    /**
+     * @return array
+     */
     public static function getControllerRules(): array
     {
         return [
@@ -55,7 +57,11 @@ class UserSettingController extends AbstractRedmineController
     }
 
     /**
-     * Update user's redmine settings
+     * Update user's redmine settings.
+     *
+     * @param Request $request
+     * @param UserRepository $userRepository
+     * @return JsonResponse
      */
     public function update(Request $request, UserRepository $userRepository): JsonResponse
     {
@@ -66,7 +72,7 @@ class UserSettingController extends AbstractRedmineController
                 Filter::process('validation.redmine.settings.update', $this->getValidationRules())
             );
 
-            $client = $this->clientFactory->createUserClient(auth()->user()->id, $request->input('redmine_api_key'));
+            $client = $this->clientFactory->createUserClient(auth()->user()->id, $request->input('api_key'));
             $currentRedmineUser = $client->user->getCurrentUser() ?: [];
 
             if (!($currentRedmineUser['user'] ?? false)) {
@@ -101,16 +107,16 @@ class UserSettingController extends AbstractRedmineController
     public function getValidationRules(): array
     {
         return [
-            'redmine_api_key' => 'required',
+            'api_key' => 'required',
         ];
     }
 
     protected function saveProperties(): void
     {
-        if (strpos($this->request->redmine_api_key, '*') !== false) {
+        if (strpos($this->request->api_key, '*') !== false) {
             return;
         }
-        $this->processFilter('redmine.settings.url.change', 'REDMINE_KEY', $this->request->redmine_api_key);
+        $this->processFilter('redmine.settings.url.change', 'REDMINE_KEY', $this->request->api_key);
     }
 
     /**
