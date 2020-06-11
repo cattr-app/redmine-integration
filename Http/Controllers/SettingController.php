@@ -2,6 +2,7 @@
 
 namespace Modules\RedmineIntegration\Http\Controllers;
 
+use App\Models\Priority;
 use Illuminate\Http\JsonResponse;
 use Modules\RedmineIntegration\Http\Requests\Setting\UpdateSettingsRequest;
 use Modules\RedmineIntegration\Services\SettingsService;
@@ -43,10 +44,14 @@ class SettingController extends AbstractRedmineController
     public function index(): JsonResponse
     {
         $settings = $this->settings->all();
+        $priorities = Priority::all();
+
+        $data = $settings;
+        $data['internal_priorities'] = $priorities;
 
         return new JsonResponse([
             'success' => true,
-            'data' => $settings,
+            'data' => $data,
         ]);
     }
 

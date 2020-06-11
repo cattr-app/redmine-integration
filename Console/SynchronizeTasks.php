@@ -368,9 +368,9 @@ class SynchronizeTasks extends Command
         });
         $priority_id = $priority['priority_id'] ?? 0;
 
-        $user_redmine_url = $this->userRepo->getUserRedmineUrl($userId);
-        if (substr($user_redmine_url, -1) !== '/') {
-            $user_redmine_url .= '/';
+        $redmineRootUrl = $this->settings->getUrl();
+        if (substr($redmineRootUrl, -1) !== '/') {
+            $redmineRootUrl .= '/';
         }
 
         $taskInfo = [
@@ -380,7 +380,7 @@ class SynchronizeTasks extends Command
             'active' => in_array($taskFromRedmine['status']['id'], $activeStatusIDs),
             'user_id' => $userId,
             'assigned_by' => 1,
-            'url' => $user_redmine_url . 'issues/' . $taskFromRedmine['id'],
+            'url' => $redmineRootUrl . 'issues/' . $taskFromRedmine['id'],
             'priority_id' => $priority_id,
         ];
 

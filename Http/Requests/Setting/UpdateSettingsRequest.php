@@ -27,7 +27,9 @@ class UpdateSettingsRequest extends FormRequest
             'enabled' => 'sometimes|required|bool',
             'url' => 'sometimes|required|url',
             'api_key' => 'sometimes|required|string',
-            'sync' => 'sometimes|required|bool'
+            'sync' => 'sometimes|required|bool',
+            'statuses' => 'sometimes|required|array',
+            'priorities' => 'sometimes|required|array',
         ];
     }
 }
