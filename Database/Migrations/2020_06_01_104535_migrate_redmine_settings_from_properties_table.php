@@ -14,13 +14,13 @@ class MigrateRedmineSettingsFromPropertiesTable extends Migration
     {
         $companySettings = DB::table('properties')
             ->where('entity_type', 'company')
-            ->where('name', 'like', 'redmine_%')
+            ->whereRaw('LOWER(name) like ?', 'redmine_%')
             ->get();
 
         foreach ($companySettings as $property) {
             DB::table('settings')->insert([
                 'module_name' => 'redmine',
-                'key' => substr(strstr($property->name, '_'), 1),
+                'key' => strtolower(substr(strstr($property->name, '_'), 1)),
                 'value' => $property->value,
             ]);
 
