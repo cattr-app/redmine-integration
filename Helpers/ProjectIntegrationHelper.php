@@ -7,7 +7,7 @@ use App\Models\Property;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use Modules\RedmineIntegration\Entities\ClientFactoryException;
+use Modules\RedmineIntegration\Exceptions\ClientFactoryException;
 
 class ProjectIntegrationHelper extends AbstractIntegrationHelper
 {

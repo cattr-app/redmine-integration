@@ -12,16 +12,14 @@ Route::middleware('auth:api')->group(static function () {
     Route::put('/time-entries', 'TimeEntryRedmineController@create')->name('time-entries.put');
 
     // Redmine Settings routes
-    Route::patch('/settings', 'RedmineSettingsController@updateSettings')
-        ->name('settings.update');
-    Route::get('/settings', 'RedmineSettingsController@getSettings')->name('settings.get');
+    Route::get('/settings', 'SettingController@index')->name('settings.index');
+    Route::patch('/settings', 'SettingController@update')->name('settings.update');
 
-    Route::group(['prefix' => '/settings/data', 'as' => 'settings.data.'], static function () {
-        Route::get(
-            'internal-priorities',
-            'RedmineSettingsController@getInternalPriorities'
-        )->name('internal-priorities');
-    });
+    // User settings routes
+    Route::get('/user-settings', 'UserSettingController@index')->name('user-settings.index');
+    Route::patch('/user-settings', 'UserSettingController@update')->name('user-settings.update');
+
+    Route::get('/settings/priorities', 'PriorityController@index')->name('settings.priorities');
 });
 
 Route::group([

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Modules\RedmineIntegration\Entities;
+namespace Modules\RedmineIntegration\Exceptions;
 
 use Exception;
 

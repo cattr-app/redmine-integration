@@ -3,16 +3,15 @@
 namespace Modules\RedmineIntegration\Console;
 
 use App\Models\User;
-use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Modules\RedmineIntegration\Entities\ClientFactoryException;
+use Modules\RedmineIntegration\Exceptions\ClientFactoryException;
 use Modules\RedmineIntegration\Entities\Repositories\ProjectRepository;
 use Modules\RedmineIntegration\Entities\Repositories\TaskRepository;
 use Modules\RedmineIntegration\Entities\Repositories\TimeIntervalRepository;
 use Modules\RedmineIntegration\Entities\Repositories\UserRepository;
 use Modules\RedmineIntegration\Models\ClientFactory;
-use Modules\RedmineIntegration\Models\Settings;
+use Modules\RedmineIntegration\Services\SettingsService;
 
 class SynchronizeTime extends Command
 {
@@ -65,7 +64,7 @@ class SynchronizeTime extends Command
         TaskRepository $taskRepo,
         TimeIntervalRepository $timeRepo,
         ClientFactory $clientFactory,
-        Settings $settings
+        SettingsService $settings
     ) {
         parent::__construct();
 
@@ -89,7 +88,7 @@ class SynchronizeTime extends Command
      */
     public function synchronizeTime(): void
     {
-        if (!$this->settings->getSendTime()) {
+        if (!$this->settings->isSyncEnabled()) {
             return;
         }
 

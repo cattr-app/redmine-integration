@@ -4,7 +4,7 @@ namespace Modules\RedmineIntegration\Console;
 
 use Illuminate\Console\Command;
 use Log;
-use Modules\RedmineIntegration\Entities\ClientFactoryException;
+use Modules\RedmineIntegration\Exceptions\ClientFactoryException;
 use Modules\RedmineIntegration\Entities\Repositories\UserRepository;
 use Modules\RedmineIntegration\Models\ClientFactory;
 

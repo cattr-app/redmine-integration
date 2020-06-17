@@ -12,14 +12,14 @@ use Modules\RedmineIntegration\Entities\Repositories\ProjectRepository;
 use Modules\RedmineIntegration\Entities\Repositories\TaskRepository;
 use Modules\RedmineIntegration\Entities\Repositories\UserRepository;
 use Modules\RedmineIntegration\Helpers\ProjectHelper;
-use Modules\RedmineIntegration\Models\Status;
+use Modules\RedmineIntegration\Services\StatusService ;
 use Symfony\Component\HttpFoundation\ParameterBag;
 
 class PluginWebhookHelper extends AbstractPluginWebhookHelper
 {
     protected Property $property;
     protected ProjectHelper $projectHelper;
-    protected Status $status;
+    protected StatusService $status;
 
     public function __construct(
         TaskRepository $taskRepository,
@@ -28,7 +28,7 @@ class PluginWebhookHelper extends AbstractPluginWebhookHelper
         Request $request,
         Property $property,
         ProjectHelper $projectHelper,
-        Status $status
+        StatusService $status
     ) {
         parent::__construct($taskRepository, $projectRepository, $userRepository, $request);
 
