@@ -18,8 +18,6 @@ Route::middleware('auth:api')->group(static function () {
     // User settings routes
     Route::get('/user-settings', 'UserSettingController@index')->name('user-settings.index');
     Route::patch('/user-settings', 'UserSettingController@update')->name('user-settings.update');
-
-    Route::get('/settings/priorities', 'PriorityController@index')->name('settings.priorities');
 });
 
 Route::group([
