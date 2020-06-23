@@ -1,12 +1,12 @@
 {
   "version": "1.0.0",
   "type": "laravel-module",
-  "name": "nwidart/redmineintegration",
+  "name": "amazingcatt/redmineintegration-module",
   "description": "",
   "authors": [
     {
-      "name": "Nicolas Widart",
-      "email": "n.widart@gmail.com"
+      "name": "AmazingCat",
+      "email": "to@amazingcat.net"
     }
   ],
   "extra": {
