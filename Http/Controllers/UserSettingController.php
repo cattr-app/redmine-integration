@@ -3,7 +3,6 @@
 namespace Modules\RedmineIntegration\Http\Controllers;
 
 use App\EventFilter\Facades\Filter;
-use App\Models\Priority;
 use App\Models\Property;
 use App\Models\User;
 use Exception;
@@ -80,7 +79,6 @@ class UserSettingController extends AbstractRedmineController
                     'Invalid API Key or Redmine is not available at the moment.'
                 );
             }
-
         } catch (Throwable $e) {
             return new JsonResponse(
                 Filter::process('answer.error.redmine.settings.update', [
@@ -98,7 +96,16 @@ class UserSettingController extends AbstractRedmineController
             $userRepository->markAsNew($this->user->id);
         }
 
-        return new JsonResponse(Filter::process('answer.success.redmine.settings.change', 'Updated!'));
+        $apiKey = $userRepository->getUserRedmineApiKey(auth()->user()->id);
+        $hiddenKey = (bool)$apiKey ? preg_replace('/^(.{4}).*(.{4})$/i', '$1 ********* $2', $apiKey) : $apiKey;
+
+        return new JsonResponse([
+            'success' => true,
+            'data' => [
+                'enabled' => $this->settings->isEnabled(),
+                'api_key' => $hiddenKey,
+            ],
+        ]);
     }
 
     /**
@@ -163,7 +170,7 @@ class UserSettingController extends AbstractRedmineController
      * @param UserRepository $userRepository
      * @return JsonResponse
      */
-    public function index(Request $request, UserRepository $userRepository): JsonResponse
+    public function index(UserRepository $userRepository): JsonResponse
     {
         $userId = auth()->user()->id;
         $apiKey = $userRepository->getUserRedmineApiKey($userId);
