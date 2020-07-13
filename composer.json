@@ -1,8 +1,8 @@
 {
   "version": "2.0.1",
   "type": "laravel-module",
-  "name": "amazingcatt/redmineintegration-module",
-  "description": "",
+  "name": "amazingcat/redmineintegration-module",
+  "description": "Redmine Integration for Cattr",
   "authors": [
     {
       "name": "AmazingCat",
