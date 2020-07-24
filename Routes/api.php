@@ -8,6 +8,16 @@ Route::middleware('auth:api')->group(static function () {
     Route::put('/instances/{id}', 'RedmineInstanceController@update')->name('redmine-instances.update');
     Route::delete('/instances/{id}', 'RedmineInstanceController@delete')->name('redmine-instances.delete');
 
+    // Redmine priorities
+    Route::get('/instances/{instanceId}/priorities', 'RedminePrioritiesController@list')->name('redmine-priorities.list');
+    Route::get('/instances/{instanceId}/priorities/{id}', 'RedminePrioritiesController@show')->name('redmine-priorities.show');
+    Route::put('/instances/{instanceId}/priorities/{id}', 'RedminePrioritiesController@update')->name('redmine-priorities.update');
+
+    // Redmine statuses
+    Route::get('/instances/{instanceId}/statuses', 'RedmineStatusesController@list')->name('redmine-statuses.list');
+    Route::get('/instances/{instanceId}/statuses/{id}', 'RedmineStatusesController@show')->name('redmine-statuses.show');
+    Route::put('/instances/{instanceId}/statuses/{id}', 'RedmineStatusesController@update')->name('redmine-statuses.update');
+
     // Task routes
     Route::post('/tasks/synchronize', 'TaskRedmineController@synchronize')->name('task.synchronize');
 

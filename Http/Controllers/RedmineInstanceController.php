@@ -3,6 +3,7 @@
 namespace Modules\RedmineIntegration\Http\Controllers;
 
 use Modules\RedmineIntegration\Entities\RedmineInstance;
+use Modules\RedmineIntegration\Http\Requests\CreateRedmineInstance;
 use Modules\RedmineIntegration\Http\Requests\UpdateRedmineInstance;
 use Modules\RedmineIntegration\Services\RedmineInstanceService;
 
@@ -32,7 +33,7 @@ class RedmineInstanceController extends AbstractRedmineController
         return response()->json($item);
     }
 
-    public function create(UpdateRedmineInstance $request)
+    public function create(CreateRedmineInstance $request)
     {
         $item = $this->redmineInstanceService->create($request->validated());
 
@@ -44,6 +45,7 @@ class RedmineInstanceController extends AbstractRedmineController
         /** @var RedmineInstance $item */
         $item = RedmineInstance::find($id);
         $item->fill($request->validated());
+        $item->save();
 
         return response()->json($item);
     }

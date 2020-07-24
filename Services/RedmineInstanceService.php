@@ -8,6 +8,17 @@ use Redmine\Client;
 
 class RedmineInstanceService
 {
+    protected RedminePriorityService $redminePriorityService;
+    protected RedmineStatusService $redmineStatusService;
+
+    public function __construct(
+        RedminePriorityService $redminePriorityService,
+        RedmineStatusService $redmineStatusService
+    ) {
+        $this->redminePriorityService = $redminePriorityService;
+        $this->redmineStatusService = $redmineStatusService;
+    }
+
     public function create(array $data): RedmineInstance
     {
         if ($data['auth_method'] === 'basic') {
@@ -30,6 +41,10 @@ class RedmineInstanceService
 
         $data['api_key'] = $redmineResponse['user']['api_key'];
 
-        return RedmineInstance::create($data);
+        $instance = RedmineInstance::create($data);
+        $this->redminePriorityService->synchronize($instance);
+        $this->redmineStatusService->synchronize($instance);
+
+        return $instance;
     }
 }
