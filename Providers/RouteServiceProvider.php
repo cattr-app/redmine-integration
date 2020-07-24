@@ -15,8 +15,8 @@ class RouteServiceProvider extends ServiceProvider
     public function map(): void
     {
         Route::middleware('api')
-            ->as('v1.integration.redmine.')
-            ->prefix('v1/integration/redmine')
+            ->as('integration.redmine.')
+            ->prefix('integration/redmine')
             ->namespace($this->moduleNamespace)
             ->group(__DIR__ . '/../Routes/api.php');
     }
