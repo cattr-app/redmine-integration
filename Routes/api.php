@@ -9,14 +9,20 @@ Route::middleware('auth:api')->group(static function () {
     Route::delete('/instances/{id}', 'RedmineInstanceController@delete')->name('redmine-instances.delete');
 
     // Redmine priorities
-    Route::get('/instances/{instanceId}/priorities', 'RedminePrioritiesController@list')->name('redmine-priorities.list');
-    Route::get('/instances/{instanceId}/priorities/{id}', 'RedminePrioritiesController@show')->name('redmine-priorities.show');
-    Route::put('/instances/{instanceId}/priorities/{id}', 'RedminePrioritiesController@update')->name('redmine-priorities.update');
+    Route::get('/instances/{instanceId}/priorities', 'RedminePriorityController@list')->name('redmine-priorities.list');
+    Route::put('/instances/{instanceId}/priorities', 'RedminePriorityController@bulkUpdate')->name('redmine-priorities.bulk-update');
+    Route::get('/instances/{instanceId}/priorities/{id}', 'RedminePriorityController@show')->name('redmine-priorities.show');
+    Route::put('/instances/{instanceId}/priorities/{id}', 'RedminePriorityController@update')->name('redmine-priorities.update');
 
     // Redmine statuses
-    Route::get('/instances/{instanceId}/statuses', 'RedmineStatusesController@list')->name('redmine-statuses.list');
-    Route::get('/instances/{instanceId}/statuses/{id}', 'RedmineStatusesController@show')->name('redmine-statuses.show');
-    Route::put('/instances/{instanceId}/statuses/{id}', 'RedmineStatusesController@update')->name('redmine-statuses.update');
+    Route::get('/instances/{instanceId}/statuses', 'RedmineStatusController@list')->name('redmine-statuses.list');
+    Route::get('/instances/{instanceId}/statuses/{id}', 'RedmineStatusController@show')->name('redmine-statuses.show');
+    Route::put('/instances/{instanceId}/statuses/{id}', 'RedmineStatusController@update')->name('redmine-statuses.update');
+
+    // Redmine projects
+    Route::get('/instances/{instanceId}/projects', 'RedmineProjectController@list')->name('redmine-projects.list');
+    Route::get('/instances/{instanceId}/projects/{id}', 'RedmineProjectController@show')->name('redmine-projects.show');
+    Route::put('/instances/{instanceId}/projects/{id}', 'RedmineProjectController@update')->name('redmine-projects.update');
 
     // Task routes
     Route::post('/tasks/synchronize', 'TaskRedmineController@synchronize')->name('task.synchronize');

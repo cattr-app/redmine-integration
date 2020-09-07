@@ -6,7 +6,7 @@ use Modules\RedmineIntegration\Entities\RedmineStatus;
 use Modules\RedmineIntegration\Http\Requests\UpdateRedmineStatus;
 use Modules\RedmineIntegration\Services\RedmineStatusService;
 
-class RedmineStatusesController extends AbstractRedmineController
+class RedmineStatusController extends AbstractRedmineController
 {
     protected RedmineStatusService $redmineStatusService;
 

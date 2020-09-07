@@ -3,10 +3,11 @@
 namespace Modules\RedmineIntegration\Http\Controllers;
 
 use Modules\RedmineIntegration\Entities\RedminePriority;
+use Modules\RedmineIntegration\Http\Requests\UpdateRedminePriorities;
 use Modules\RedmineIntegration\Http\Requests\UpdateRedminePriority;
 use Modules\RedmineIntegration\Services\RedminePriorityService;
 
-class RedminePrioritiesController extends AbstractRedmineController
+class RedminePriorityController extends AbstractRedmineController
 {
     protected RedminePriorityService $redmineStatusService;
 
@@ -47,5 +48,26 @@ class RedminePrioritiesController extends AbstractRedmineController
         $item->save();
 
         return response()->json($item);
+    }
+
+    public function bulkUpdate(UpdateRedminePriorities $request, $instanceId)
+    {
+        $input = $request->validated();
+        $items = [];
+
+        foreach ($input['priorities'] as $priority) {
+            /** @var RedminePriority $item */
+            $item = RedminePriority::where([
+                'redmine_instance_id' => $instanceId,
+                'id'                  => $priority['id'],
+            ])->firstOrFail();
+
+            $item->priority_id = $priority['priority_id'];
+            $item->save();
+
+            $items[] = $item;
+        }
+
+        return response()->json($items);
     }
 }

@@ -10,13 +10,16 @@ class RedmineInstanceService
 {
     protected RedminePriorityService $redminePriorityService;
     protected RedmineStatusService $redmineStatusService;
+    protected RedmineProjectService $redmineProjectService;
 
     public function __construct(
         RedminePriorityService $redminePriorityService,
-        RedmineStatusService $redmineStatusService
+        RedmineStatusService $redmineStatusService,
+        RedmineProjectService $redmineProjectService
     ) {
         $this->redminePriorityService = $redminePriorityService;
         $this->redmineStatusService = $redmineStatusService;
+        $this->redmineProjectService = $redmineProjectService;
     }
 
     public function create(array $data): RedmineInstance
@@ -44,6 +47,7 @@ class RedmineInstanceService
         $instance = RedmineInstance::create($data);
         $this->redminePriorityService->synchronize($instance);
         $this->redmineStatusService->synchronize($instance);
+        $this->redmineProjectService->synchronize($instance, false);
 
         return $instance;
     }
