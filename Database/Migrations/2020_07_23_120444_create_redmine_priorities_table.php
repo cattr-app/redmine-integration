@@ -21,8 +21,8 @@ class CreateRedminePrioritiesTable extends Migration
             $table->unsignedInteger('priority_id');
             $table->timestamps();
 
-            $table->foreign('redmine_instance_id')->references('id')->on('redmine_instances');
-            $table->foreign('priority_id')->references('id')->on('priorities');
+            $table->foreign('redmine_instance_id')->references('id')->on('redmine_instances')->cascadeOnDelete();
+            $table->foreign('priority_id')->references('id')->on('priorities')->cascadeOnDelete();
         });
     }
 

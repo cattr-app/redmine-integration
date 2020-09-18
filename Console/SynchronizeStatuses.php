@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Log;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Exceptions\ClientFactoryException;
 use Modules\RedmineIntegration\Services\RedmineStatusService;
-use Modules\RedmineIntegration\Services\StatusService;
 
 class SynchronizeStatuses extends Command
 {
@@ -31,7 +30,7 @@ class SynchronizeStatuses extends Command
     /**
      * Create a new command instance.
      *
-     * @param StatusService $status
+     * @param RedmineStatusService $status
      */
     public function __construct(RedmineStatusService $redmineStatusService)
     {

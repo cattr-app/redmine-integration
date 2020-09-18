@@ -10,10 +10,7 @@ use Modules\RedmineIntegration\Console\SynchronizePriorities;
 use Modules\RedmineIntegration\Console\SynchronizeProjects;
 use Modules\RedmineIntegration\Console\SynchronizeStatuses;
 use Modules\RedmineIntegration\Console\SynchronizeTasks;
-use Modules\RedmineIntegration\Console\SynchronizeTime;
-use Modules\RedmineIntegration\Console\SynchronizeUsers;
 use Modules\RedmineIntegration\Http\Middleware\ValidateSignature;
-use Modules\RedmineIntegration\Services\SettingsService;
 
 class RedmineIntegrationServiceProvider extends ServiceProvider
 {
@@ -63,12 +60,6 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
             'redmineintegration.signature',
             ValidateSignature::class
         );
-
-        $this->app->when(\Modules\RedmineIntegration\Services\SettingsService::class)
-            ->needs(\App\Contracts\Settings::class)
-            ->give(function () {
-                return new \App\Services\SettingsService(new \Modules\RedmineIntegration\Models\Setting);
-            });
 
         parent::boot();
     }
@@ -148,8 +139,6 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
             SynchronizeStatuses::class,
             SynchronizePriorities::class,
             SynchronizeProjects::class,
-            SynchronizeUsers::class,
-            SynchronizeTime::class,
             GenerateSignature::class
         ]);
     }

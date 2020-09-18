@@ -8,6 +8,7 @@ use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Services\RedminePriorityService;
 use Modules\RedmineIntegration\Services\RedmineProjectService;
 use Modules\RedmineIntegration\Services\RedmineStatusService;
+use Modules\RedmineIntegration\Services\RedmineTaskService;
 
 class ScheduleServiceProvider extends ServiceProvider
 {
@@ -40,7 +41,9 @@ class ScheduleServiceProvider extends ServiceProvider
                     }
 
                     if ($instance->task_sync_interval > 0 && $minutes % $instance->task_sync_interval === 0) {
-                        // TODO
+                        /** @var RedmineTaskService $service */
+                        $service = app(RedmineTaskService::class);
+                        $service->synchronize($instance);
                     }
                 }
             })->everyMinute();

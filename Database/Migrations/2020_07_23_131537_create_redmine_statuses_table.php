@@ -21,7 +21,7 @@ class CreateRedmineStatusesTable extends Migration
             $table->boolean('is_closed');
             $table->timestamps();
 
-            $table->foreign('redmine_instance_id')->references('id')->on('redmine_instances');
+            $table->foreign('redmine_instance_id')->references('id')->on('redmine_instances')->cascadeOnDelete();
         });
     }
 

@@ -21,8 +21,8 @@ class CreateRedmineProjectsTable extends Migration
             $table->unsignedInteger('project_id')->nullable();
             $table->timestamps();
 
-            $table->foreign('redmine_instance_id')->references('id')->on('redmine_instances');
-            $table->foreign('project_id')->references('id')->on('projects');
+            $table->foreign('redmine_instance_id')->references('id')->on('redmine_instances')->cascadeOnDelete();
+            $table->foreign('project_id')->references('id')->on('projects')->cascadeOnDelete();
         });
     }
 

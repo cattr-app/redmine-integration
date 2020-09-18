@@ -33,7 +33,7 @@ class RedmineInstanceService
         }
 
         $redmineResponse = $client->user->getCurrentUser();
-        if (!isset($redmineResponse)) {
+        if (!isset($redmineResponse) || $redmineResponse === false) {
             throw new Exception('Invalid credentials');
         }
 
