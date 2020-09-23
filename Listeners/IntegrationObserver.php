@@ -7,7 +7,9 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
+use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedmineTask;
+use Modules\RedmineIntegration\Entities\RedmineTimeInterval;
 
 class IntegrationObserver
 {
@@ -130,5 +132,20 @@ class IntegrationObserver
         $rules['integration']['redmine'] = __('Redmine integration');
 
         return $rules;
+    }
+
+    public function timeIntervalCreation($response)
+    {
+        $taskRelation = RedmineTask::where([
+            'task_id' => $response['interval']->task_id,
+        ])->first();
+        if (isset($taskRelation) && isset($taskRelation->redmineInstance)) {
+            RedmineTimeInterval::create([
+                'redmine_instance_id' => $taskRelation->redmineInstance->id,
+                'time_interval_id' => $response['interval']->id,
+            ]);
+        }
+
+        return $response;
     }
 }

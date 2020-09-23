@@ -10,6 +10,7 @@ use Modules\RedmineIntegration\Console\SynchronizePriorities;
 use Modules\RedmineIntegration\Console\SynchronizeProjects;
 use Modules\RedmineIntegration\Console\SynchronizeStatuses;
 use Modules\RedmineIntegration\Console\SynchronizeTasks;
+use Modules\RedmineIntegration\Console\SynchronizeTime;
 use Modules\RedmineIntegration\Http\Middleware\ValidateSignature;
 
 class RedmineIntegrationServiceProvider extends ServiceProvider
@@ -41,6 +42,9 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
         ],
         'role.actions.list' => [
             'Modules\RedmineIntegration\Listeners\IntegrationObserver@rulesHook',
+        ],
+        'answer.success.item.create.timeinterval' => [
+            'Modules\RedmineIntegration\Listeners\IntegrationObserver@timeIntervalCreation',
         ],
     ];
 
@@ -139,7 +143,8 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
             SynchronizeStatuses::class,
             SynchronizePriorities::class,
             SynchronizeProjects::class,
-            GenerateSignature::class
+            SynchronizeTime::class,
+            GenerateSignature::class,
         ]);
     }
 }
