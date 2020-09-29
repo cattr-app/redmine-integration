@@ -108,7 +108,8 @@ class IntegrationObserver
                     $redmineTask,
                     $redmineProject->redmine_project_id,
                     $redmineUser->redmine_user_id,
-                    $redminePriority->redmine_priority_id
+                    $redminePriority->redmine_priority_id,
+                    $task
                 );
             }
         }

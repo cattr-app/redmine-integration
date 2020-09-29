@@ -27,7 +27,8 @@ class RedmineWebhookController extends BaseController
 
     public function webhook(Request $request)
     {
-        $data = $request->json()['parameters']['payload'];
+        $json = json_decode($request->getContent(), true);
+        $data = $json['payload'];
         $origin = $this->getOrigin($data['url']);
         $instance = RedmineInstance::where(['url' => $origin])->firstOrFail();
         $this->redmineTaskService->createTaskFromWebhook($instance, $data['issue']['id'], $data['issue']);

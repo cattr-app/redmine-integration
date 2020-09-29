@@ -236,17 +236,18 @@ class RedmineTaskService
     }
 
     public function updateRedmineTask(
-        RedmineTask $task,
+        RedmineTask $redmineTask,
         int $redmineProjectId,
         int $redmineUserId,
-        int $redminePriorityId
+        int $redminePriorityId,
+        Task $task
     ) {
-        $redmineInstance = $task->redmineInstance;
+        $redmineInstance = $redmineTask->redmineInstance;
         $client = new Client($redmineInstance->url, $redmineInstance->api_key);
-        $client->issue->update($task->redmine_issue_id, [
+        $client->issue->update($redmineTask->redmine_issue_id, [
             'project_id' => $redmineProjectId,
-            'subject' => $task->task->task_name,
-            'description' => $task->task->description,
+            'subject' => $task->task_name,
+            'description' => $task->description,
             'assigned_to_id' => $redmineUserId,
             'priority_id' => $redminePriorityId,
         ]);
