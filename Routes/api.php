@@ -28,6 +28,7 @@ Route::group(['middleware' => 'auth:api'], static function (Router $router) {
 
     // Redmine users
     $router->post('/instances/{instanceId}/users', 'RedmineUserController@create')->name('redmine-users.create');
+    $router->post('/instances/{instanceId}/check-auth', 'RedmineUserController@checkAuth')->name('redmine-users.check-auth');
 });
 
 Route::any('/webhook', 'RedmineWebhookController@webhook')->name('redmine-webhook');

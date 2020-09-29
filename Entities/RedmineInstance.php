@@ -26,4 +26,15 @@ class RedmineInstance extends Model
     protected $hidden = [
         'api_key',
     ];
+
+    /**
+     * @var array
+     */
+    protected $casts = [
+        'sync_new_projects' => 'int',
+        'project_sync_interval' => 'int',
+        'task_sync_interval' => 'int',
+        'priority_sync_interval' => 'int',
+        'status_sync_interval' => 'int',
+    ];
 }

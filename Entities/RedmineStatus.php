@@ -17,6 +17,15 @@ class RedmineStatus extends Model
         'is_closed',
     ];
 
+    /**
+     * @var array
+     */
+    protected $casts = [
+        'redmine_status_id' => 'int',
+        'redmine_instance_id' => 'int',
+        'is_closed' => 'int',
+    ];
+
     public function redmineInstance(): BelongsTo
     {
         return $this->belongsTo(RedmineInstance::class, 'redmine_instance_id');

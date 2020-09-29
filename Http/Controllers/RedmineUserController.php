@@ -25,4 +25,13 @@ class RedmineUserController extends AbstractRedmineController
 
         return response()->json($item);
     }
+
+    public function checkAuth($instanceId)
+    {
+        $user = auth()->user();
+        $instance = RedmineInstance::findOrFail($instanceId);
+        $result = $this->redmineUserService->checkAuth($instance, $user);
+
+        return response()->json(['status' => $result]);
+    }
 }

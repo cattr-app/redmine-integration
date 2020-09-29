@@ -18,6 +18,15 @@ class RedminePriority extends Model
         'priority_id',
     ];
 
+    /**
+     * @var array
+     */
+    protected $casts = [
+        'redmine_priority_id' => 'int',
+        'redmine_instance_id' => 'int',
+        'priority_id' => 'int',
+    ];
+
     public function redmineInstance(): BelongsTo
     {
         return $this->belongsTo(RedmineInstance::class, 'redmine_instance_id');

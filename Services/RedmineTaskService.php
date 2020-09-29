@@ -234,4 +234,21 @@ class RedmineTaskService
             ]);
         }
     }
+
+    public function updateRedmineTask(
+        RedmineTask $task,
+        int $redmineProjectId,
+        int $redmineUserId,
+        int $redminePriorityId
+    ) {
+        $redmineInstance = $task->redmineInstance;
+        $client = new Client($redmineInstance->url, $redmineInstance->api_key);
+        $client->issue->update($task->redmine_issue_id, [
+            'project_id' => $redmineProjectId,
+            'subject' => $task->task->task_name,
+            'description' => $task->task->description,
+            'assigned_to_id' => $redmineUserId,
+            'priority_id' => $redminePriorityId,
+        ]);
+    }
 }

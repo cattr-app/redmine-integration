@@ -2,10 +2,12 @@
 
 namespace Modules\RedmineIntegration\Services;
 
+use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedmineUser;
+use Modules\RedmineIntegration\Notifications\Unauthorized;
 use Redmine\Client;
 
 class RedmineUserService
@@ -34,5 +36,26 @@ class RedmineUserService
         ]);
 
         return $user;
+    }
+
+    public function checkAuth(RedmineInstance $instance, User $user): bool
+    {
+        $relation = RedmineUser::where([
+            'redmine_instance_id' => $instance->id,
+            'user_id' => $user->id,
+        ])->first();
+        if (!isset($relation)) {
+            return false;
+        }
+
+        $client = new Client($instance->url, $relation->api_key);
+        $redmineResponse = $client->user->getCurrentUser();
+        if (isset($redmineResponse) && $redmineResponse !== false) {
+            return true;
+        } else {
+            $user->notify(new Unauthorized($instance));
+
+            return false;
+        }
     }
 }
