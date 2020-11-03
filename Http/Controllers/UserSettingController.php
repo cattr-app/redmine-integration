@@ -100,7 +100,6 @@ class UserSettingController extends AbstractRedmineController
         $hiddenKey = (bool)$apiKey ? preg_replace('/^(.{4}).*(.{4})$/i', '$1 ********* $2', $apiKey) : $apiKey;
 
         return new JsonResponse([
-            'success' => true,
             'data' => [
                 'enabled' => $this->settings->isEnabled(),
                 'api_key' => $hiddenKey,
@@ -181,7 +180,6 @@ class UserSettingController extends AbstractRedmineController
             'api_key' => $hiddenKey
         ];
         return new JsonResponse([
-            'success' => true,
             'data' => $settings,
         ]);
     }
