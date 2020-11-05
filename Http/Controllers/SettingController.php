@@ -50,7 +50,6 @@ class SettingController extends AbstractRedmineController
         $data['internal_priorities'] = $priorities;
 
         return new JsonResponse([
-            'success' => true,
             'data' => $data,
         ]);
     }
@@ -66,7 +65,6 @@ class SettingController extends AbstractRedmineController
         $settings = $this->settings->set($request->validated());
 
         return new JsonResponse([
-            'success' => true,
             'data' => $settings,
         ]);
     }
