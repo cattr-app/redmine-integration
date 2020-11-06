@@ -4,7 +4,6 @@ namespace Modules\RedmineIntegration\Providers;
 
 use App\EventFilter\EventServiceProvider as ServiceProvider;
 use Config;
-use Illuminate\Database\Eloquent\Factory;
 use Modules\RedmineIntegration\Console\GenerateSignature;
 use Modules\RedmineIntegration\Console\SynchronizeGroups;
 use Modules\RedmineIntegration\Console\SynchronizePriorities;
@@ -57,7 +56,6 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
         $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();
-        $this->registerFactories();
         $this->loadMigrationsFrom(__DIR__ . '/../Database/Migrations');
         $this->registerCommands();
 
@@ -99,17 +97,6 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
         $this->loadViewsFrom(array_merge(array_map(static function ($path) {
             return $path . '/modules/redmineintegration';
         }, Config::get('view.paths')), [$sourcePath]), 'redmineintegration');
-    }
-
-    /**
-     * Register an additional directory of factories.
-     * @source https://github.com/sebastiaanluca/laravel-resource-flow/blob/develop/src/Modules/ModuleServiceProvider.php#L66
-     */
-    public function registerFactories(): void
-    {
-        if (!app()->environment('production')) {
-            app(Factory::class)->load(__DIR__ . '/../Database/factories');
-        }
     }
 
     /**
