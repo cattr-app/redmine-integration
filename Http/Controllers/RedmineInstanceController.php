@@ -18,6 +18,14 @@ class RedmineInstanceController extends AbstractRedmineController
         $this->redmineInstanceService = $redmineInstanceService;
     }
 
+    public static function getControllerRules(): array
+    {
+        return [
+            'list' => 'integration.redmine',
+            'show' => 'integration.redmine',
+        ];
+    }
+
     public function list()
     {
         $items = RedmineInstance::all();

@@ -18,6 +18,14 @@ class RedmineUserController extends AbstractRedmineController
         $this->redmineUserService = $redmineUserService;
     }
 
+    public static function getControllerRules(): array
+    {
+        return [
+            'create' => 'integration.redmine',
+            'checkAuth' => 'integration.redmine',
+        ];
+    }
+
     public function create(CreateRedmineUser $request, $instanceId)
     {
         $instance = RedmineInstance::findOrFail($instanceId);

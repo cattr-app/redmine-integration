@@ -7,6 +7,14 @@ use Modules\RedmineIntegration\Http\Requests\UpdateRedmineProject;
 
 class RedmineProjectController extends AbstractRedmineController
 {
+    public static function getControllerRules(): array
+    {
+        return [
+            'list' => 'integration.redmine',
+            'show' => 'integration.redmine',
+        ];
+    }
+
     public function list($instanceId)
     {
         $items = RedmineProject::where(['redmine_instance_id' => $instanceId])->get();

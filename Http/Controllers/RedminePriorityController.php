@@ -18,6 +18,14 @@ class RedminePriorityController extends AbstractRedmineController
         $this->redmineInstanceService = $redmineStatusService;
     }
 
+    public static function getControllerRules(): array
+    {
+        return [
+            'list' => 'integration.redmine',
+            'show' => 'integration.redmine',
+        ];
+    }
+
     public function list($instanceId)
     {
         $items = RedminePriority::where(['redmine_instance_id' => $instanceId])->get();
