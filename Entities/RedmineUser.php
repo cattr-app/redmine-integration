@@ -44,4 +44,9 @@ class RedmineUser extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function groups()
+    {
+        return $this->belongsToMany(RedmineGroup::class, 'redmine_groups_users');
+    }
 }

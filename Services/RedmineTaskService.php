@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\Task;
 use Exception;
 use Illuminate\Support\Arr;
+use Modules\RedmineIntegration\Entities\RedmineGroup;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedminePriority;
 use Modules\RedmineIntegration\Entities\RedmineProject;
@@ -16,6 +17,13 @@ use Redmine\Client;
 
 class RedmineTaskService
 {
+    protected RedmineGroupService $groupService;
+
+    public function __construct(RedmineGroupService $groupService)
+    {
+        $this->groupService = $groupService;
+    }
+
     protected function createRedmineTask(RedmineInstance $redmineInstance, int $redmineIssueId, array $data)
     {
         $existingRedmineTask = RedmineTask::where([
@@ -39,13 +47,30 @@ class RedmineTaskService
         ])->first();
 
         if (isset($data['assigned_to'])) {
-            $redmineUser = RedmineUser::where([
+            $redmineGroup = RedmineGroup::where([
                 'redmine_instance_id' => $redmineInstance->id,
-                'redmine_user_id' => $data['assigned_to']['id'],
+                'redmine_group_id' => $data['assigned_to']['id'],
             ])->first();
+
+            if (isset($redmineGroup)) {
+                $redmineUsers = $redmineGroup->users;
+            } else {
+                $redmineUser = RedmineUser::where([
+                    'redmine_instance_id' => $redmineInstance->id,
+                    'redmine_user_id' => $data['assigned_to']['id'],
+                ])->first();
+
+                if (isset($redmineUser)) {
+                    $redmineUsers = [$redmineUser];
+                } else {
+                    $redmineUsers = [];
+                }
+            }
         } else {
-            $redmineUser = null;
+            $redmineUsers = [];
         }
+
+        $userIds = collect($redmineUsers)->pluck('user_id');
 
         $active = !$redmineStatus->is_closed;
 
@@ -65,9 +90,9 @@ class RedmineTaskService
                     'priority_id' => $redminePriority->priority_id,
                     'active' => $active,
                     'url' => $url,
-                    'user_id' => isset($redmineUser) ? $redmineUser->user_id : null,
                 ]);
 
+                $existingRedmineTask->task->users()->sync($userIds);
                 $existingRedmineTask->task->save();
             } else {
                 $task = Task::create([
@@ -77,10 +102,10 @@ class RedmineTaskService
                     'priority_id' => $redminePriority->priority_id,
                     'active' => $active,
                     'url' => $url,
-                    'user_id' => isset($redmineUser) ? $redmineUser->user_id : null,
                     'important' => false,
                 ]);
 
+                $task->users()->sync($userIds);
                 $existingRedmineTask->task_id = $task->id;
                 $existingRedmineTask->save();
             }
@@ -92,9 +117,10 @@ class RedmineTaskService
                 'priority_id' => $redminePriority->priority_id,
                 'active' => $active,
                 'url' => $url,
-                'user_id' => isset($redmineUser) ? $redmineUser->user_id : null,
                 'important' => false,
             ]);
+
+            $task->users()->sync($userIds);
 
             RedmineTask::create([
                 'redmine_issue_id' => $redmineIssueId,
@@ -146,14 +172,31 @@ class RedmineTaskService
             'redmine_priority_id' => $data['priority']['id'],
         ])->first();
 
-        if (isset($data['assignee'])) {
-            $redmineUser = RedmineUser::where([
+        if (isset($data['assigned_to'])) {
+            $redmineGroup = RedmineGroup::where([
                 'redmine_instance_id' => $redmineInstance->id,
-                'redmine_user_id' => $data['assignee']['id'],
+                'redmine_group_id' => $data['assigned_to']['id'],
             ])->first();
+
+            if (isset($redmineGroup)) {
+                $redmineUsers = $redmineGroup->users;
+            } else {
+                $redmineUser = RedmineUser::where([
+                    'redmine_instance_id' => $redmineInstance->id,
+                    'redmine_user_id' => $data['assigned_to']['id'],
+                ])->first();
+
+                if (isset($redmineUser)) {
+                    $redmineUsers = [$redmineUser];
+                } else {
+                    $redmineUsers = [];
+                }
+            }
         } else {
-            $redmineUser = null;
+            $redmineUsers = [];
         }
+
+        $userIds = collect($redmineUsers)->pluck('user_id');
 
         if (!isset($redmineProject)) {
             if ($redmineInstance->sync_new_projects) {
@@ -196,9 +239,9 @@ class RedmineTaskService
                     'priority_id' => $redminePriority->priority_id,
                     'active' => $active,
                     'url' => $url,
-                    'user_id' => isset($redmineUser) ? $redmineUser->user_id : null,
                 ]);
 
+                $existingRedmineTask->task->users()->sync($userIds);
                 $existingRedmineTask->task->save();
             } else {
                 $task = Task::create([
@@ -208,10 +251,10 @@ class RedmineTaskService
                     'priority_id' => $redminePriority->priority_id,
                     'active' => $active,
                     'url' => $url,
-                    'user_id' => isset($redmineUser) ? $redmineUser->user_id : null,
                     'important' => false,
                 ]);
 
+                $task->users()->sync($userIds);
                 $existingRedmineTask->task_id = $task->id;
                 $existingRedmineTask->save();
             }
@@ -223,9 +266,9 @@ class RedmineTaskService
                 'priority_id' => $redminePriority->priority_id,
                 'active' => $active,
                 'url' => $url,
-                'user_id' => isset($redmineUser) ? $redmineUser->user_id : null,
                 'important' => false,
             ]);
+            $task->users()->sync($userIds);
 
             RedmineTask::create([
                 'redmine_issue_id' => $redmineIssueId,

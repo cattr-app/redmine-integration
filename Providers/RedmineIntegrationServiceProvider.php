@@ -6,6 +6,7 @@ use App\EventFilter\EventServiceProvider as ServiceProvider;
 use Config;
 use Illuminate\Database\Eloquent\Factory;
 use Modules\RedmineIntegration\Console\GenerateSignature;
+use Modules\RedmineIntegration\Console\SynchronizeGroups;
 use Modules\RedmineIntegration\Console\SynchronizePriorities;
 use Modules\RedmineIntegration\Console\SynchronizeProjects;
 use Modules\RedmineIntegration\Console\SynchronizeStatuses;
@@ -144,6 +145,7 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
             SynchronizePriorities::class,
             SynchronizeProjects::class,
             SynchronizeTime::class,
+            SynchronizeGroups::class,
             GenerateSignature::class,
         ]);
     }
