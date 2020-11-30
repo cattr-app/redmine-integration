@@ -37,7 +37,15 @@ class ClientFactory
             throw new ClientFactoryException('Empty API key', 404);
         }
 
-        return new Client($url, $key);
+        $client = new Client($url, $key);
+        if (!is_array($client->user->getCurrentUser())) {
+            throw new ClientFactoryException(
+                'Invalid API key or Redmine not available. Please contact your administrator',
+                404
+            );
+        }
+
+        return $client;
     }
 
     /**
@@ -58,6 +66,14 @@ class ClientFactory
             throw new ClientFactoryException('Empty API key', 404);
         }
 
-        return new Client($url, $key);
+        $client = new Client($url, $key);
+        if (!is_array($client->user->getCurrentUser())) {
+            throw new ClientFactoryException(
+                'Invalid API key or Redmine not available. Please contact your administrator',
+                404
+            );
+        }
+
+        return $client;
     }
 }
