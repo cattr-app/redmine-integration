@@ -24,8 +24,8 @@ class RedmineStatusService
     {
         $client = new Client($redmineInstance->url, $redmineInstance->api_key);
         $response = $client->issue_status->all();
-        if (!isset($response['issue_statuses'])) {
-            throw new Exception("Can't synchronize statuses for " . $redmineInstance->url);
+        if (!is_array($response) || !isset($response['issue_statuses'])) {
+            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
         }
 
         foreach ($response['issue_statuses'] as $status) {

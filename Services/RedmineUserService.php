@@ -23,8 +23,8 @@ class RedmineUserService
         }
 
         $redmineResponse = $client->user->getCurrentUser();
-        if (!isset($redmineResponse) || $redmineResponse === false) {
-            throw new Exception('Invalid credentials');
+        if (!isset($redmineResponse) || !is_array($redmineResponse)) {
+            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
         }
 
         $user = RedmineUser::updateOrCreate([
@@ -50,7 +50,7 @@ class RedmineUserService
 
         $client = new Client($instance->url, $relation->api_key);
         $redmineResponse = $client->user->getCurrentUser();
-        if (isset($redmineResponse) && $redmineResponse !== false) {
+        if (isset($redmineResponse) && is_array($redmineResponse)) {
             return true;
         } else {
             $user->notify(new Unauthorized($instance));

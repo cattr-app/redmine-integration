@@ -134,8 +134,8 @@ class RedmineTaskService
     {
         $client = new Client($redmineInstance->url, $redmineInstance->api_key);
         $response = $client->issue->all();
-        if (!isset($response['issues'])) {
-            throw new Exception("Can't synchronize tasks for " . $redmineInstance->url);
+        if (!is_array($response) || !isset($response['issues'])) {
+            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
         }
 
         foreach ($response['issues'] as $issue) {

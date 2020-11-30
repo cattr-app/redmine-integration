@@ -58,8 +58,8 @@ class RedmineProjectService
     {
         $client = new Client($redmineInstance->url, $redmineInstance->api_key);
         $response = $client->project->all();
-        if (!isset($response['projects'])) {
-            throw new Exception("Can't synchronize projects for " . $redmineInstance->url);
+        if (!is_array($response) || !isset($response['projects'])) {
+            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
         }
 
         foreach ($response['projects'] as $project) {

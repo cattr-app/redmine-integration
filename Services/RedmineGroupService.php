@@ -2,6 +2,7 @@
 
 namespace Modules\RedmineIntegration\Services;
 
+use Exception;
 use Modules\RedmineIntegration\Entities\RedmineGroup;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedmineUser;
@@ -13,6 +14,9 @@ class RedmineGroupService
     {
         $client = new Client($redmineInstance->url, $redmineInstance->api_key);
         $response = $client->group->show($groupId, ['include' => 'users']);
+        if (!is_array($response)) {
+            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
+        }
 
         $redmineUserIds = [];
         foreach ($response['group']['users'] as $user) {
@@ -32,6 +36,10 @@ class RedmineGroupService
     {
         $client = new Client($redmineInstance->url, $redmineInstance->api_key);
         $response = $client->group->all();
+        if (!is_array($response)) {
+            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
+        }
+
         foreach ($response['groups'] as $group) {
             $this->synchronize($redmineInstance, $group['id']);
         }

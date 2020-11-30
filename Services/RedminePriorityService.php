@@ -37,8 +37,8 @@ class RedminePriorityService
     {
         $client = new Client($redmineInstance->url, $redmineInstance->api_key);
         $response = $client->issue_priority->all();
-        if (!isset($response['issue_priorities'])) {
-            throw new Exception("Can't synchronize priorities for " . $redmineInstance->url);
+        if (!is_array($response) || !isset($response['issue_priorities'])) {
+            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
         }
 
         foreach ($response['issue_priorities'] as $priority) {
