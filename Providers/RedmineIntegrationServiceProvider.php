@@ -16,6 +16,16 @@ use Modules\RedmineIntegration\Http\Middleware\ValidateSignature;
 class RedmineIntegrationServiceProvider extends ServiceProvider
 {
     /**
+     * @var string $moduleName
+     */
+    protected string $moduleName = 'RedmineIntegration';
+
+    /**
+     * @var string $moduleNameLower
+     */
+    protected string $moduleNameLower = 'redmineintegration';
+
+    /**
      * @var array
      */
     protected $listen = [
@@ -56,7 +66,7 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
         $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();
-        $this->loadMigrationsFrom(__DIR__ . '/../Database/Migrations');
+        $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
         $this->registerCommands();
 
         app('router')->aliasMiddleware(
@@ -72,12 +82,12 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
      */
     public function registerTranslations(): void
     {
-        $langPath = resource_path('lang/modules/redmineintegration');
+        $langPath = resource_path('lang/modules/' . $this->moduleNameLower);
 
         if (is_dir($langPath)) {
-            $this->loadTranslationsFrom($langPath, 'redmineintegration');
+            $this->loadTranslationsFrom($langPath, $this->moduleNameLower);
         } else {
-            $this->loadTranslationsFrom(__DIR__ . '/../Resources/lang', 'redmineintegration');
+            $this->loadTranslationsFrom(module_path($this->moduleName, 'Resources/lang'), $this->moduleNameLower);
         }
     }
 
@@ -86,17 +96,15 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
      */
     public function registerViews(): void
     {
-        $viewPath = resource_path('views/modules/redmineintegration');
+        $viewPath = resource_path('views/modules/' . $this->moduleNameLower);
 
-        $sourcePath = __DIR__ . '/../Resources/views';
+        $sourcePath = module_path($this->moduleName, 'Resources/views');
 
         $this->publishes([
             $sourcePath => $viewPath
-        ], 'views');
+        ], ['views', $this->moduleNameLower . '-module-views']);
 
-        $this->loadViewsFrom(array_merge(array_map(static function ($path) {
-            return $path . '/modules/redmineintegration';
-        }, Config::get('view.paths')), [$sourcePath]), 'redmineintegration');
+        $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->moduleNameLower);
     }
 
     /**
@@ -115,11 +123,11 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
     protected function registerConfig(): void
     {
         $this->publishes([
-            __DIR__ . '/../Config/config.php' => config_path('redmineintegration.php'),
+            module_path($this->moduleName, 'Config/config.php') => config_path($this->moduleNameLower . '.php'),
         ], 'config');
         $this->mergeConfigFrom(
-            __DIR__ . '/../Config/config.php',
-            'redmineintegration'
+            module_path($this->moduleName, 'Config/config.php'),
+            $this->moduleNameLower
         );
     }
 
@@ -135,5 +143,16 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
             SynchronizeGroups::class,
             GenerateSignature::class,
         ]);
+    }
+
+    private function getPublishableViewPaths(): array
+    {
+        $paths = [];
+        foreach (Config::get('view.paths') as $path) {
+            if (is_dir($path . '/modules/' . $this->moduleNameLower)) {
+                $paths[] = $path . '/modules/' . $this->moduleNameLower;
+            }
+        }
+        return $paths;
     }
 }
