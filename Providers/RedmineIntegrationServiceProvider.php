@@ -65,7 +65,6 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
     {
         $this->registerTranslations();
         $this->registerConfig();
-        $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
         $this->registerCommands();
 
@@ -97,21 +96,6 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Register views.
-     */
-    public function registerViews(): void
-    {
-        $viewPath = resource_path('views/modules/' . $this->moduleNameLower);
-
-        $sourcePath = module_path($this->moduleName, 'Resources/views');
-
-        $this->publishes([
-            $sourcePath => $viewPath
-        ], ['views', $this->moduleNameLower . '-module-views']);
-
-        $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->moduleNameLower);
-    }
 
     /**
      * Register the service provider.
