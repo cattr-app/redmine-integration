@@ -133,7 +133,7 @@ class RedmineTaskService
     public function synchronize(RedmineInstance $redmineInstance)
     {
         $client = new Client($redmineInstance->url, $redmineInstance->api_key);
-        $response = $client->issue->all();
+        $response = $client->issue->all(['status_id' => '*']);
         if (!is_array($response) || !isset($response['issues'])) {
             throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
         }
