@@ -2,49 +2,29 @@
 
 namespace Modules\RedmineIntegration\Listeners;
 
-use App\Models\Property;
-use App\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
-use Modules\RedmineIntegration\Entities\Repositories\ProjectRepository;
-use Modules\RedmineIntegration\Entities\Repositories\TaskRepository;
-use Modules\RedmineIntegration\Entities\Repositories\UserRepository;
-use Modules\RedmineIntegration\Models\ClientFactory;
-use Modules\RedmineIntegration\Models\Priority;
+use Modules\RedmineIntegration\Entities\RedminePriority;
+use Modules\RedmineIntegration\Entities\RedmineProject;
+use Modules\RedmineIntegration\Entities\RedmineTask;
+use Modules\RedmineIntegration\Entities\RedmineTimeInterval;
+use Modules\RedmineIntegration\Entities\RedmineUser;
+use Modules\RedmineIntegration\Services\RedmineTaskService;
 
-/**
- * @property ProjectRepository $projectRepo
- * @property TaskRepository $taskRepo
- */
 class IntegrationObserver
 {
     use Dispatchable;
     use InteractsWithSockets;
     use SerializesModels;
-    public ProjectRepository $projectRepo;
-    public TaskRepository $taskRepo;
-    public UserRepository $userRepo;
-    public ClientFactory $clientFactory;
-    public Priority $priority;
 
-    /**
-     * Create the event listener.
-     */
-    public function __construct(
-        ProjectRepository $projectRepo,
-        TaskRepository $taskRepo,
-        UserRepository $userRepo,
-        ClientFactory $clientFactory,
-        Priority $priority
-    ) {
-        $this->projectRepo = $projectRepo;
-        $this->taskRepo = $taskRepo;
-        $this->userRepo = $userRepo;
-        $this->clientFactory = $clientFactory;
-        $this->priority = $priority;
+    protected RedmineTaskService $redmineTaskService;
+
+    public function __construct(RedmineTaskService $redmineTaskService)
+    {
+        $this->redmineTaskService = $redmineTaskService;
     }
 
     /**
@@ -58,12 +38,6 @@ class IntegrationObserver
      */
     public function taskCreation($task)
     {
-        $redmineProjectsIds = $this->projectRepo->getRedmineProjectsIds();
-
-        if (in_array($task->project_id, $redmineProjectsIds)) {
-            $this->taskRepo->markAsNew($task->id);
-        }
-
         return $task;
     }
 
@@ -76,8 +50,6 @@ class IntegrationObserver
      */
     public function userAfterEdition($json)
     {
-        $user = User::where('email', $json['res']->email)->first();
-
         return $json;
     }
 
@@ -102,8 +74,44 @@ class IntegrationObserver
      */
     public function taskEdition($task)
     {
-        if ($this->taskRepo->getRedmineTaskId($task->id)) {
-            abort(403, 'Access denied to edit a task from Redmine integration');
+        $redmineTask = RedmineTask::where(['task_id' => $task->id])->first();
+        if (isset($redmineTask)) {
+            $redmineInstance = $redmineTask->redmineInstance;
+            if ($redmineInstance->sync_type === 'cron') {
+                abort(403, 'Access denied to edit a task from Redmine integration');
+            } else {
+                $redmineProject = RedmineProject::where([
+                    'redmine_instance_id' => $redmineTask->redmine_instance_id,
+                    'project_id' => $task->project_id,
+                ])->first();
+                if (!isset($redmineProject)) {
+                    abort(400, 'Project not found in the Redmine');
+                }
+
+                $redmineUser = RedmineUser::where([
+                    'redmine_instance_id' => $redmineTask->redmine_instance_id,
+                    'user_id' => $task->user_id,
+                ])->first();
+                if (!isset($redmineUser)) {
+                    abort(400, 'User not found in the Redmine');
+                }
+
+                $redminePriority = RedminePriority::where([
+                    'redmine_instance_id' => $redmineTask->redmine_instance_id,
+                    'priority_id' => $task->priority_id,
+                ])->first();
+                if (!isset($redminePriority)) {
+                    abort(400, 'Priority not found in the Redmine');
+                }
+
+                $this->redmineTaskService->updateRedmineTask(
+                    $redmineTask,
+                    $redmineProject->redmine_project_id,
+                    $redmineUser->redmine_user_id,
+                    $redminePriority->redmine_priority_id,
+                    $task
+                );
+            }
         }
 
         return $task;
@@ -118,7 +126,7 @@ class IntegrationObserver
      */
     public function taskDeletion($task)
     {
-        if ($this->taskRepo->getRedmineTaskId($task->id)) {
+        if (RedmineTask::where(['task_id' => $task->id])->first() !== null) {
             abort(403, 'Access denied to delete a task from Redmine integration');
         }
 
@@ -142,10 +150,9 @@ class IntegrationObserver
         $taskIds = $items->map(static function ($task) {
             return $task->id;
         })->toArray();
-        $redmineTaskIds = Property::where([
-            'entity_type' => Property::TASK_CODE,
-            'name' => 'REDMINE_ID',
-        ])->whereIn('entity_id', $taskIds)->pluck('entity_id')->toArray();
+        $redmineTaskIds = RedmineTask::whereHas('redmineInstance', static function ($query) {
+            $query->where('sync_type', 'cron');
+        })->whereIn('task_id', $taskIds)->pluck('task_id')->toArray();
 
         $items->transform(static function ($item) use ($redmineTaskIds) {
             if (in_array($item->id, $redmineTaskIds)) {
@@ -173,5 +180,20 @@ class IntegrationObserver
         $rules['integration']['redmine'] = __('Redmine integration');
 
         return $rules;
+    }
+
+    public function timeIntervalCreation($response)
+    {
+        $taskRelation = RedmineTask::where([
+            'task_id' => $response['interval']->task_id,
+        ])->first();
+        if (isset($taskRelation) && isset($taskRelation->redmineInstance)) {
+            RedmineTimeInterval::create([
+                'redmine_instance_id' => $taskRelation->redmineInstance->id,
+                'time_interval_id' => $response['interval']->id,
+            ]);
+        }
+
+        return $response;
     }
 }

@@ -31,9 +31,14 @@ class TaskReceived implements ShouldBroadcast
     /**
      * Get the channels the event should be broadcast on.
      */
-    public function broadcastOn(): PrivateChannel
+    public function broadcastOn(): array
     {
-        return new PrivateChannel("task.updates.{$this->task->user_id}");
+        $channels = [];
+        foreach ($this->task->users as $user) {
+            $channels[] = new PrivateChannel("task.updates.{$user->id}");
+        }
+
+        return $channels;
     }
 
     public function broadcastAs(): string

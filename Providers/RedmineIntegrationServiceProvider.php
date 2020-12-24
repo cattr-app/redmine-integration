@@ -2,19 +2,16 @@
 
 namespace Modules\RedmineIntegration\Providers;
 
-use App\Contracts\Settings;
 use App\EventFilter\EventServiceProvider as ServiceProvider;
 use Config;
 use Modules\RedmineIntegration\Console\GenerateSignature;
+use Modules\RedmineIntegration\Console\SynchronizeGroups;
 use Modules\RedmineIntegration\Console\SynchronizePriorities;
 use Modules\RedmineIntegration\Console\SynchronizeProjects;
 use Modules\RedmineIntegration\Console\SynchronizeStatuses;
 use Modules\RedmineIntegration\Console\SynchronizeTasks;
 use Modules\RedmineIntegration\Console\SynchronizeTime;
-use Modules\RedmineIntegration\Console\SynchronizeUsers;
 use Modules\RedmineIntegration\Http\Middleware\ValidateSignature;
-use Modules\RedmineIntegration\Models\Setting;
-use Modules\RedmineIntegration\Services\SettingsService;
 
 class RedmineIntegrationServiceProvider extends ServiceProvider
 {
@@ -56,6 +53,9 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
         'role.actions.list' => [
             'Modules\RedmineIntegration\Listeners\IntegrationObserver@rulesHook',
         ],
+        'answer.success.item.create.timeinterval' => [
+            'Modules\RedmineIntegration\Listeners\IntegrationObserver@timeIntervalCreation',
+        ],
     ];
 
     /**
@@ -72,12 +72,6 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
             'redmineintegration.signature',
             ValidateSignature::class
         );
-
-        $this->app->when(SettingsService::class)
-            ->needs(Settings::class)
-            ->give(function () {
-                return new \App\Services\SettingsService(new Setting);
-            });
 
         parent::boot();
     }
@@ -129,9 +123,9 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
             SynchronizeStatuses::class,
             SynchronizePriorities::class,
             SynchronizeProjects::class,
-            SynchronizeUsers::class,
             SynchronizeTime::class,
-            GenerateSignature::class
+            SynchronizeGroups::class,
+            GenerateSignature::class,
         ]);
     }
 
