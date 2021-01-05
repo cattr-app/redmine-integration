@@ -22,6 +22,12 @@ class RedmineTimeService
 
         $groupedRelations = [];
         foreach ($relations as $relation) {
+            // If related interval was soft-deleted
+            if (!isset($relation->timeInterval)) {
+                $relation->delete();
+                continue;
+            }
+
             $userId = $relation->timeInterval->user_id;
             $date = Carbon::parse($relation->timeInterval->start_at)->format('Y-m-d');
 
