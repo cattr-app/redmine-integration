@@ -14,7 +14,7 @@ class UpdateRedmineStatus extends FormRequest
     public function rules()
     {
         return [
-            'is_closed' => 'required|boolean',
+            'status_id' => 'required|integer',
         ];
     }
 

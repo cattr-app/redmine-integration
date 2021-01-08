@@ -18,6 +18,7 @@ Route::group(['middleware' => 'auth:api'], static function (Router $router) {
 
     // Redmine statuses
     $router->get('/instances/{instanceId}/statuses', 'RedmineStatusController@list')->name('redmine-statuses.list');
+    $router->put('/instances/{instanceId}/statuses', 'RedmineStatusController@bulkUpdate')->name('redmine-statuses.bulk-update');
     $router->get('/instances/{instanceId}/statuses/{id}', 'RedmineStatusController@show')->name('redmine-statuses.show');
     $router->put('/instances/{instanceId}/statuses/{id}', 'RedmineStatusController@update')->name('redmine-statuses.update');
 

@@ -72,8 +72,6 @@ class RedmineTaskService
 
         $userIds = collect($redmineUsers)->pluck('user_id');
 
-        $active = !$redmineStatus->is_closed;
-
         $url = $redmineInstance->url;
         if (substr($url, -1) !== '/') {
             $url .= '/';
@@ -88,7 +86,7 @@ class RedmineTaskService
                     'description' => $data['description'],
                     'project_id' => $redmineProject->project_id,
                     'priority_id' => $redminePriority->priority_id,
-                    'active' => $active,
+                    'status_id' => $redmineStatus->status_id,
                     'url' => $url,
                 ]);
 
@@ -100,7 +98,7 @@ class RedmineTaskService
                     'description' => $data['description'],
                     'project_id' => $redmineProject->project_id,
                     'priority_id' => $redminePriority->priority_id,
-                    'active' => $active,
+                    'status_id' => $redmineStatus->status_id,
                     'url' => $url,
                     'important' => false,
                 ]);
@@ -115,7 +113,7 @@ class RedmineTaskService
                 'description' => $data['description'],
                 'project_id' => $redmineProject->project_id,
                 'priority_id' => $redminePriority->priority_id,
-                'active' => $active,
+                'status_id' => $redmineStatus->status_id,
                 'url' => $url,
                 'important' => false,
             ]);
@@ -221,8 +219,6 @@ class RedmineTaskService
             return;
         }
 
-        $active = !$redmineStatus->is_closed;
-
         $url = $redmineInstance->url;
         if (substr($url, -1) !== '/') {
             $url .= '/';
@@ -237,7 +233,7 @@ class RedmineTaskService
                     'description' => $data['description'],
                     'project_id' => $redmineProject->project_id,
                     'priority_id' => $redminePriority->priority_id,
-                    'active' => $active,
+                    'status_id' => $redmineStatus->status_id,
                     'url' => $url,
                 ]);
 
@@ -249,7 +245,7 @@ class RedmineTaskService
                     'description' => $data['description'],
                     'project_id' => $redmineProject->project_id,
                     'priority_id' => $redminePriority->priority_id,
-                    'active' => $active,
+                    'status_id' => $redmineStatus->status_id,
                     'url' => $url,
                     'important' => false,
                 ]);
@@ -264,7 +260,7 @@ class RedmineTaskService
                 'description' => $data['description'],
                 'project_id' => $redmineProject->project_id,
                 'priority_id' => $redminePriority->priority_id,
-                'active' => $active,
+                'status_id' => $redmineStatus->status_id,
                 'url' => $url,
                 'important' => false,
             ]);
