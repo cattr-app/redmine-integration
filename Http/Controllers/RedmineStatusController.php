@@ -4,6 +4,7 @@ namespace Modules\RedmineIntegration\Http\Controllers;
 
 use Modules\RedmineIntegration\Entities\RedmineStatus;
 use Modules\RedmineIntegration\Http\Requests\UpdateRedmineStatus;
+use Modules\RedmineIntegration\Http\Requests\UpdateRedmineStatuses;
 use Modules\RedmineIntegration\Services\RedmineStatusService;
 
 class RedmineStatusController extends AbstractRedmineController
@@ -51,5 +52,26 @@ class RedmineStatusController extends AbstractRedmineController
         $item->save();
 
         return response()->json($item);
+    }
+
+    public function bulkUpdate(UpdateRedmineStatuses $request, $instanceId)
+    {
+        $input = $request->validated();
+        $items = [];
+
+        foreach ($input['statuses'] as $status) {
+            /** @var RedmineStatus $item */
+            $item = RedmineStatus::where([
+                'redmine_instance_id' => $instanceId,
+                'id'                  => $status['id'],
+            ])->firstOrFail();
+
+            $item->status_id = $status['status_id'];
+            $item->save();
+
+            $items[] = $item;
+        }
+
+        return response()->json($items);
     }
 }
