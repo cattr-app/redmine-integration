@@ -57,7 +57,13 @@ class RedmineProjectService
     public function synchronize(RedmineInstance $redmineInstance, bool $createInternalProjects = true)
     {
         $client = new Client($redmineInstance->url, $redmineInstance->api_key);
-        $response = $client->project->all();
+        $response = $client->project->all(['limit' => 1]);
+        if (empty($response['total_count'])) {
+            return;
+        }
+
+        $count = $response['total_count'];
+        $response = $client->project->all(['limit' => $count]);
         if (!is_array($response) || !isset($response['projects'])) {
             throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
         }
