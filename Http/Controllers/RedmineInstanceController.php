@@ -43,6 +43,7 @@ class RedmineInstanceController extends AbstractRedmineController
 
     public function create(CreateRedmineInstance $request)
     {
+        /** @var RedmineInstance $item */
         $item = $this->redmineInstanceService->create($request->validated());
 
         return response()->json($item);
@@ -51,9 +52,7 @@ class RedmineInstanceController extends AbstractRedmineController
     public function update(UpdateRedmineInstance $request, $id)
     {
         /** @var RedmineInstance $item */
-        $item = RedmineInstance::find($id);
-        $item->fill($request->validated());
-        $item->save();
+        $item = $this->redmineInstanceService->update($id, $request->validated());
 
         return response()->json($item);
     }

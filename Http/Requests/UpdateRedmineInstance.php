@@ -21,6 +21,10 @@ class UpdateRedmineInstance extends FormRequest
             'task_sync_interval' => 'required|integer',
             'priority_sync_interval' => 'required|integer',
             'status_sync_interval' => 'required|integer',
+            'auth_method' => 'sometimes|required|string',
+            'auth_login' => 'required_if:auth_method,basic|string',
+            'auth_password' => 'required_if:auth_method,basic|string',
+            'auth_api_key' => 'required_if:auth_method,api_key|string|max:256',
         ];
     }
 
