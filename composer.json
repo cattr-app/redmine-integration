@@ -1,5 +1,5 @@
 {
-  "version": "4.1.0",
+  "version": "4.2.0",
   "type": "laravel-module",
   "name": "amazingcat/redmineintegration-module",
   "description": "Redmine Integration for Cattr",
@@ -24,6 +24,9 @@
     }
   },
   "require": {
-    "kbsali/redmine-api": "*"
+    "kbsali/redmine-api": "^2.0"
+  },
+  "require-dev": {
+    "roave/security-advisories": "dev-latest"
   }
 }

@@ -13,18 +13,15 @@ use Modules\RedmineIntegration\Entities\RedmineProject;
 use Modules\RedmineIntegration\Entities\RedmineStatus;
 use Modules\RedmineIntegration\Entities\RedmineTask;
 use Modules\RedmineIntegration\Entities\RedmineUser;
-use Redmine\Client;
+use Redmine\Client\NativeCurlClient;
 
 class RedmineTaskService
 {
-    protected RedmineGroupService $groupService;
-
-    public function __construct(RedmineGroupService $groupService)
+    public function __construct(protected RedmineGroupService $groupService)
     {
-        $this->groupService = $groupService;
     }
 
-    protected function createRedmineTask(RedmineInstance $redmineInstance, int $redmineIssueId, array $data)
+    protected function createRedmineTask(RedmineInstance $redmineInstance, int $redmineIssueId, array $data): void
     {
         $existingRedmineTask = RedmineTask::where([
             'redmine_instance_id' => $redmineInstance->id,
@@ -128,16 +125,16 @@ class RedmineTaskService
         }
     }
 
-    public function synchronize(RedmineInstance $redmineInstance)
+    public function synchronize(RedmineInstance $redmineInstance): void
     {
-        $client = new Client($redmineInstance->url, $redmineInstance->api_key);
-        $response = $client->issue->all(['status_id' => '*', 'limit' => 1]);
+        $client = new NativeCurlClient($redmineInstance->url, $redmineInstance->api_key);
+        $response = $client->getApi('issue')->all(['status_id' => '*', 'limit' => 1]);
         if (empty($response['total_count'])) {
             return;
         }
 
         $count = $response['total_count'];
-        $response = $client->issue->all(['status_id' => '*', 'limit' => $count]);
+        $response = $client->getApi('issue')->all(['status_id' => '*', 'limit' => $count]);
         if (!is_array($response) || !isset($response['issues'])) {
             throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
         }
@@ -154,7 +151,7 @@ class RedmineTaskService
         }
     }
 
-    public function createTaskFromWebhook(RedmineInstance $redmineInstance, int $redmineIssueId, array $data)
+    public function createTaskFromWebhook(RedmineInstance $redmineInstance, int $redmineIssueId, array $data): void
     {
         $existingRedmineTask = RedmineTask::where([
             'redmine_instance_id' => $redmineInstance->id,
@@ -176,10 +173,10 @@ class RedmineTaskService
             'redmine_priority_id' => $data['priority']['id'],
         ])->first();
 
-        if (isset($data['assigned_to'])) {
+        if (isset($data['assignee'])) {
             $redmineGroup = RedmineGroup::where([
                 'redmine_instance_id' => $redmineInstance->id,
-                'redmine_group_id' => $data['assigned_to']['id'],
+                'redmine_group_id' => $data['assignee']['id'],
             ])->first();
 
             if (isset($redmineGroup)) {
@@ -187,7 +184,7 @@ class RedmineTaskService
             } else {
                 $redmineUser = RedmineUser::where([
                     'redmine_instance_id' => $redmineInstance->id,
-                    'redmine_user_id' => $data['assigned_to']['id'],
+                    'redmine_user_id' => $data['assignee']['id'],
                 ])->first();
 
                 if (isset($redmineUser)) {
@@ -286,10 +283,10 @@ class RedmineTaskService
         int $redmineUserId,
         int $redminePriorityId,
         Task $task
-    ) {
+    ): void {
         $redmineInstance = $redmineTask->redmineInstance;
-        $client = new Client($redmineInstance->url, $redmineInstance->api_key);
-        $client->issue->update($redmineTask->redmine_issue_id, [
+        $client = new NativeCurlClient($redmineInstance->url, $redmineInstance->api_key);
+        $client->getApi('issue')->update($redmineTask->redmine_issue_id, [
             'project_id' => $redmineProjectId,
             'subject' => $task->task_name,
             'description' => $task->description,
