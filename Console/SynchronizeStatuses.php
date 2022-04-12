@@ -30,7 +30,7 @@ class SynchronizeStatuses extends Command
     /**
      * Create a new command instance.
      *
-     * @param RedmineStatusService $status
+     * @param RedmineStatusService $redmineStatusService
      */
     public function __construct(RedmineStatusService $redmineStatusService)
     {

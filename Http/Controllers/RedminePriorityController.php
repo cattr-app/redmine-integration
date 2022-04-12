@@ -2,6 +2,7 @@
 
 namespace Modules\RedmineIntegration\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Modules\RedmineIntegration\Entities\RedminePriority;
 use Modules\RedmineIntegration\Http\Requests\UpdateRedminePriorities;
 use Modules\RedmineIntegration\Http\Requests\UpdateRedminePriority;
@@ -9,15 +10,6 @@ use Modules\RedmineIntegration\Services\RedminePriorityService;
 
 class RedminePriorityController extends AbstractRedmineController
 {
-    protected RedminePriorityService $redmineStatusService;
-
-    public function __construct(RedminePriorityService $redmineStatusService)
-    {
-        parent::__construct();
-
-        $this->redmineInstanceService = $redmineStatusService;
-    }
-
     public static function getControllerRules(): array
     {
         return [
@@ -26,14 +18,14 @@ class RedminePriorityController extends AbstractRedmineController
         ];
     }
 
-    public function list($instanceId)
+    public function list($instanceId): JsonResponse
     {
         $items = RedminePriority::where(['redmine_instance_id' => $instanceId])->get();
 
         return response()->json($items);
     }
 
-    public function show($instanceId, $id)
+    public function show($instanceId, $id): JsonResponse
     {
         /** @var RedminePriority $item */
         $item = RedminePriority::where([
@@ -44,7 +36,7 @@ class RedminePriorityController extends AbstractRedmineController
         return response()->json($item);
     }
 
-    public function update(UpdateRedminePriority $request, $instanceId, $id)
+    public function update(UpdateRedminePriority $request, $instanceId, $id): JsonResponse
     {
         /** @var RedminePriority $item */
         $item = RedminePriority::where([
@@ -58,7 +50,7 @@ class RedminePriorityController extends AbstractRedmineController
         return response()->json($item);
     }
 
-    public function bulkUpdate(UpdateRedminePriorities $request, $instanceId)
+    public function bulkUpdate(UpdateRedminePriorities $request, $instanceId): JsonResponse
     {
         $input = $request->validated();
         $items = [];

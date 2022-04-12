@@ -2,6 +2,7 @@
 
 namespace Modules\RedmineIntegration\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Modules\RedmineIntegration\Entities\RedmineProject;
 use Modules\RedmineIntegration\Http\Requests\UpdateRedmineProject;
 
@@ -15,14 +16,14 @@ class RedmineProjectController extends AbstractRedmineController
         ];
     }
 
-    public function list($instanceId)
+    public function list($instanceId): JsonResponse
     {
         $items = RedmineProject::where(['redmine_instance_id' => $instanceId])->get();
 
         return response()->json($items);
     }
 
-    public function show($instanceId, $id)
+    public function show($instanceId, $id): JsonResponse
     {
         /** @var RedmineProject $item */
         $item = RedmineProject::where([
@@ -33,7 +34,7 @@ class RedmineProjectController extends AbstractRedmineController
         return response()->json($item);
     }
 
-    public function update(UpdateRedmineProject $request, $instanceId, $id)
+    public function update(UpdateRedmineProject $request, $instanceId, $id): JsonResponse
     {
         /** @var RedmineProject $item */
         $item = RedmineProject::where([

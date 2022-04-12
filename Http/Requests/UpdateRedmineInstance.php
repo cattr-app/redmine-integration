@@ -11,7 +11,7 @@ class UpdateRedmineInstance extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             'url' => 'required|url|max:256',
@@ -33,7 +33,7 @@ class UpdateRedmineInstance extends FormRequest
      *
      * @return bool
      */
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }

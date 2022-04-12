@@ -2,6 +2,7 @@
 
 namespace Modules\RedmineIntegration\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Http\Controllers\AbstractRedmineController;
 use Modules\RedmineIntegration\Http\Requests\CreateRedmineUser;
@@ -9,13 +10,8 @@ use Modules\RedmineIntegration\Services\RedmineUserService;
 
 class RedmineUserController extends AbstractRedmineController
 {
-    protected RedmineUserService $redmineUserService;
-
-    public function __construct(RedmineUserService $redmineUserService)
+    public function __construct(protected RedmineUserService $redmineUserService)
     {
-        parent::__construct();
-
-        $this->redmineUserService = $redmineUserService;
     }
 
     public static function getControllerRules(): array
@@ -26,7 +22,7 @@ class RedmineUserController extends AbstractRedmineController
         ];
     }
 
-    public function create(CreateRedmineUser $request, $instanceId)
+    public function create(CreateRedmineUser $request, $instanceId): JsonResponse
     {
         $instance = RedmineInstance::findOrFail($instanceId);
         $item = $this->redmineUserService->create($instance, $request->validated());
@@ -34,7 +30,7 @@ class RedmineUserController extends AbstractRedmineController
         return response()->json($item);
     }
 
-    public function checkAuth($instanceId)
+    public function checkAuth($instanceId): JsonResponse
     {
         $user = auth()->user();
         $instance = RedmineInstance::findOrFail($instanceId);

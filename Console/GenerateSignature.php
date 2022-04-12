@@ -22,16 +22,6 @@ class GenerateSignature extends Command
     protected $description = 'Generate HTTP request signature for Redmine Plugin.';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws Exception
@@ -81,7 +71,7 @@ class GenerateSignature extends Command
     /**
      * @return mixed
      */
-    protected function getEnvFilePath()
+    protected function getEnvFilePath(): mixed
     {
         return $this->laravel->environmentFilePath();
     }

@@ -36,7 +36,7 @@ class IntegrationObserver
      *
      * @return mixed
      */
-    public function taskCreation($task)
+    public function taskCreation($task): mixed
     {
         return $task;
     }
@@ -48,7 +48,7 @@ class IntegrationObserver
      *
      * @return mixed
      */
-    public function userAfterEdition($json)
+    public function userAfterEdition($json): mixed
     {
         return $json;
     }
@@ -60,7 +60,7 @@ class IntegrationObserver
      *
      * @return mixed
      */
-    public function userShow($user)
+    public function userShow($user): mixed
     {
         return $user;
     }
@@ -72,7 +72,7 @@ class IntegrationObserver
      *
      * @return mixed
      */
-    public function taskEdition($task)
+    public function taskEdition($task): mixed
     {
         $redmineTask = RedmineTask::where(['task_id' => $task->id])->first();
         if (isset($redmineTask)) {
@@ -124,7 +124,7 @@ class IntegrationObserver
      *
      * @return mixed
      */
-    public function taskDeletion($task)
+    public function taskDeletion($task): mixed
     {
         if (RedmineTask::where(['task_id' => $task->id])->first() !== null) {
             abort(403, 'Access denied to delete a task from Redmine integration');
@@ -139,7 +139,7 @@ class IntegrationObserver
      * @param Collection|Paginator $tasks
      * @return Paginator|Collection
      */
-    public function taskList($tasks)
+    public function taskList($tasks): Paginator|Collection
     {
         if ($tasks instanceof Paginator) {
             $items = $tasks->getCollection();

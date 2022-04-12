@@ -15,7 +15,7 @@ class ValidateSignature
      *
      * @return mixed
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         if ($request->header('X-REDMINE-SIGNATURE') !== config('redmineintegration.request.signature')) {
             return response('ERR_INVALID_SIGN', 403);

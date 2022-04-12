@@ -49,7 +49,7 @@ class RedmineGroupUser extends Model
         return $this->belongsTo(RedmineUser::class, 'redmine_user_id');
     }*/
 
-    protected function setKeysForSaveQuery(Builder $query): Builder
+    protected function setKeysForSaveQuery($query): Builder
     {
         return $query->where('redmine_group_id', '=', $this->getAttribute('redmine_group_id'))
             ->where('redmine_user_id', '=', $this->getAttribute('redmine_user_id'));

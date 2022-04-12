@@ -2,6 +2,7 @@
 
 namespace Modules\RedmineIntegration\Console;
 
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
@@ -50,7 +51,7 @@ class SynchronizeTime extends Command
             foreach (RedmineInstance::all() as $instance) {
                 $this->redmineTimeService->synchronize($instance);
             }
-        } catch (ClientFactoryException $e) {
+        } catch (Exception $e) {
             Log::info($e->getMessage());
         }
     }

@@ -2,22 +2,13 @@
 
 namespace Modules\RedmineIntegration\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Modules\RedmineIntegration\Entities\RedmineStatus;
 use Modules\RedmineIntegration\Http\Requests\UpdateRedmineStatus;
 use Modules\RedmineIntegration\Http\Requests\UpdateRedmineStatuses;
-use Modules\RedmineIntegration\Services\RedmineStatusService;
 
 class RedmineStatusController extends AbstractRedmineController
 {
-    protected RedmineStatusService $redmineStatusService;
-
-    public function __construct(RedmineStatusService $redmineStatusService)
-    {
-        parent::__construct();
-
-        $this->redmineInstanceService = $redmineStatusService;
-    }
-
     public static function getControllerRules(): array
     {
         return [
@@ -26,14 +17,14 @@ class RedmineStatusController extends AbstractRedmineController
         ];
     }
 
-    public function list($instanceId)
+    public function list($instanceId): JsonResponse
     {
         $items = RedmineStatus::where(['redmine_instance_id' => $instanceId])->get();
 
         return response()->json($items);
     }
 
-    public function show($instanceId, $id)
+    public function show($instanceId, $id): JsonResponse
     {
         /** @var RedmineStatus $item */
         $item = RedmineStatus::where([
@@ -44,7 +35,7 @@ class RedmineStatusController extends AbstractRedmineController
         return response()->json($item);
     }
 
-    public function update(UpdateRedmineStatus $request, $id)
+    public function update(UpdateRedmineStatus $request, $id): JsonResponse
     {
         /** @var RedmineStatus $item */
         $item = RedmineStatus::find($id);
@@ -54,7 +45,7 @@ class RedmineStatusController extends AbstractRedmineController
         return response()->json($item);
     }
 
-    public function bulkUpdate(UpdateRedmineStatuses $request, $instanceId)
+    public function bulkUpdate(UpdateRedmineStatuses $request, $instanceId): JsonResponse
     {
         $input = $request->validated();
         $items = [];

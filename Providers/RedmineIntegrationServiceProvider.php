@@ -2,7 +2,7 @@
 
 namespace Modules\RedmineIntegration\Providers;
 
-use App\EventFilter\EventServiceProvider as ServiceProvider;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Config;
 use Modules\RedmineIntegration\Console\GenerateSignature;
 use Modules\RedmineIntegration\Console\SynchronizeGroups;
@@ -38,22 +38,22 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
         'item.remove.task' => [
             'Modules\RedmineIntegration\Listeners\IntegrationObserver@taskDeletion',
         ],
-        'answer.success.item.list.result.task' => [
+        'response.success.tasks.list' => [
             'Modules\RedmineIntegration\Listeners\IntegrationObserver@taskList',
         ],
-        'answer.success.item.show.user' => [
+        'response.success.users.show' => [
             'Modules\RedmineIntegration\Listeners\IntegrationObserver@userShow',
         ],
-        'answer.success.item.edit.user' => [
+        'response.success.users.edit' => [
             'Modules\RedmineIntegration\Listeners\IntegrationObserver@userAfterEdition',
         ],
-        'answer.success.item.create.user' => [
+        'response.success.users.create' => [
             'Modules\RedmineIntegration\Listeners\IntegrationObserver@userAfterEdition',
         ],
         'role.actions.list' => [
             'Modules\RedmineIntegration\Listeners\IntegrationObserver@rulesHook',
         ],
-        'answer.success.item.create.timeinterval' => [
+        'response.success.interval.create' => [
             'Modules\RedmineIntegration\Listeners\IntegrationObserver@timeIntervalCreation',
         ],
     ];

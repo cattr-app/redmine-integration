@@ -26,7 +26,7 @@ class RedmineGroup extends Model
     ];
 
     /**
-     * @return HasMany
+     * @return BelongsToMany
      */
     /*public function usersRelation(): HasMany
     {
@@ -38,7 +38,7 @@ class RedmineGroup extends Model
         return $this->belongsToMany(RedmineUser::class, 'redmine_groups_users', 'redmine_group_id', 'redmine_user_id');
     }*/
 
-    public function users()
+    public function users(): BelongsToMany
     {
         return $this->belongsToMany(RedmineUser::class, 'redmine_groups_users');
     }
