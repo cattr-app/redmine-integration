@@ -8,7 +8,7 @@ use Modules\RedmineIntegration\Http\Controllers\RedmineStatusController;
 use Modules\RedmineIntegration\Http\Controllers\RedmineUserController;
 use Modules\RedmineIntegration\Http\Controllers\RedmineWebhookController;
 
-Route::group(['middleware' => 'auth:api'], static function (Router $router) {
+Route::group(['middleware' => 'auth:sanctum'], static function (Router $router) {
     // Redmine instances
     $router->get('/instances', [RedmineInstanceController::class, 'list'])
            ->name('redmine-instances.list');
