@@ -6,6 +6,22 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modules\RedmineIntegration\Entities\RedmineGroupUser
+ *
+ * @property int $redmine_group_id
+ * @property int $redmine_user_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @method static Builder|RedmineGroupUser newModelQuery()
+ * @method static Builder|RedmineGroupUser newQuery()
+ * @method static Builder|RedmineGroupUser query()
+ * @method static Builder|RedmineGroupUser whereCreatedAt($value)
+ * @method static Builder|RedmineGroupUser whereRedmineGroupId($value)
+ * @method static Builder|RedmineGroupUser whereRedmineUserId($value)
+ * @method static Builder|RedmineGroupUser whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class RedmineGroupUser extends Model
 {
     /**

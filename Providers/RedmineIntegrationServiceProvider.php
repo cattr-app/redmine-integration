@@ -2,6 +2,8 @@
 
 namespace Modules\RedmineIntegration\Providers;
 
+use Event;
+use Filter;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Config;
 use Modules\RedmineIntegration\Console\GenerateSignature;
@@ -12,6 +14,8 @@ use Modules\RedmineIntegration\Console\SynchronizeStatuses;
 use Modules\RedmineIntegration\Console\SynchronizeTasks;
 use Modules\RedmineIntegration\Console\SynchronizeTime;
 use Modules\RedmineIntegration\Http\Middleware\ValidateSignature;
+use Modules\RedmineIntegration\Subscribers\EventObserver;
+use Modules\RedmineIntegration\Subscribers\FilterObserver;
 
 class RedmineIntegrationServiceProvider extends ServiceProvider
 {
@@ -24,39 +28,6 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
      * @var string $moduleNameLower
      */
     protected string $moduleNameLower = 'redmineintegration';
-
-    /**
-     * @var array
-     */
-    protected $listen = [
-        'item.create.task' => [
-            'Modules\RedmineIntegration\Listeners\IntegrationObserver@taskCreation',
-        ],
-        'item.edit.task' => [
-            'Modules\RedmineIntegration\Listeners\IntegrationObserver@taskEdition',
-        ],
-        'item.remove.task' => [
-            'Modules\RedmineIntegration\Listeners\IntegrationObserver@taskDeletion',
-        ],
-        'response.success.tasks.list' => [
-            'Modules\RedmineIntegration\Listeners\IntegrationObserver@taskList',
-        ],
-        'response.success.users.show' => [
-            'Modules\RedmineIntegration\Listeners\IntegrationObserver@userShow',
-        ],
-        'response.success.users.edit' => [
-            'Modules\RedmineIntegration\Listeners\IntegrationObserver@userAfterEdition',
-        ],
-        'response.success.users.create' => [
-            'Modules\RedmineIntegration\Listeners\IntegrationObserver@userAfterEdition',
-        ],
-        'role.actions.list' => [
-            'Modules\RedmineIntegration\Listeners\IntegrationObserver@rulesHook',
-        ],
-        'response.success.interval.create' => [
-            'Modules\RedmineIntegration\Listeners\IntegrationObserver@timeIntervalCreation',
-        ],
-    ];
 
     /**
      * Boot the application events.
@@ -99,6 +70,9 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
         $this->app->register(ScheduleServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
         $this->app->register(BroadcastServiceProvider::class);
+
+        $this->booting(static fn() => Event::subscribe(EventObserver::class));
+        $this->booting(static fn() => Filter::subscribe(FilterObserver::class));
     }
 
     /**
@@ -127,16 +101,5 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
             SynchronizeGroups::class,
             GenerateSignature::class,
         ]);
-    }
-
-    private function getPublishableViewPaths(): array
-    {
-        $paths = [];
-        foreach (Config::get('view.paths') as $path) {
-            if (is_dir($path . '/modules/' . $this->moduleNameLower)) {
-                $paths[] = $path . '/modules/' . $this->moduleNameLower;
-            }
-        }
-        return $paths;
     }
 }

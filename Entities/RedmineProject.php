@@ -6,6 +6,30 @@ use App\Models\Project;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Modules\RedmineIntegration\Entities\RedmineProject
+ *
+ * @property int $id
+ * @property int $redmine_project_id
+ * @property string $name
+ * @property int $redmine_instance_id
+ * @property int|null $project_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read Project|null $project
+ * @property-read \Modules\RedmineIntegration\Entities\RedmineInstance $redmineInstance
+ * @method static \Illuminate\Database\Eloquent\Builder|RedmineProject newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|RedmineProject newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|RedmineProject query()
+ * @method static \Illuminate\Database\Eloquent\Builder|RedmineProject whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|RedmineProject whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|RedmineProject whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|RedmineProject whereProjectId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|RedmineProject whereRedmineInstanceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|RedmineProject whereRedmineProjectId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|RedmineProject whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class RedmineProject extends Model
 {
     /**
