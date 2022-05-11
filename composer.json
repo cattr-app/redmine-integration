@@ -1,20 +1,23 @@
 {
   "type": "laravel-module",
-  "name": "amazingcat/redmineintegration-module",
+  "name": "cattr/redmine_integration-module",
   "description": "Redmine Integration for Cattr",
+  "license": "GNU GPLv3",
   "authors": [
     {
       "name": "AmazingCat",
       "email": "to@amazingcat.net"
+    },
+    {
+      "name": "Alex V",
+      "email": "alex@cattr.app"
     }
   ],
   "extra": {
     "laravel": {
       "providers": [
         "Modules\\RedmineIntegration\\Providers\\RedmineIntegrationServiceProvider"
-      ],
-      "aliases": {
-      }
+      ]
     }
   },
   "autoload": {
