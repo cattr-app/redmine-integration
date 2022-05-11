@@ -1,5 +1,4 @@
 {
-  "version": "5.0.0",
   "type": "laravel-module",
   "name": "amazingcat/redmineintegration-module",
   "description": "Redmine Integration for Cattr",
