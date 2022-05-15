@@ -280,7 +280,7 @@ class RedmineTaskService
     public function updateRedmineTask(
         RedmineTask $redmineTask,
         int $redmineProjectId,
-        int $redmineUserId,
+        array $redmineUsers,
         int $redminePriorityId,
         Task $task
     ): void {
@@ -290,7 +290,7 @@ class RedmineTaskService
             'project_id' => $redmineProjectId,
             'subject' => $task->task_name,
             'description' => $task->description,
-            'assigned_to_id' => $redmineUserId,
+            'assigned_to_id' => $redmineUsers,
             'priority_id' => $redminePriorityId,
         ]);
     }

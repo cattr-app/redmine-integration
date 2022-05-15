@@ -2,12 +2,8 @@
 
 namespace Modules\RedmineIntegration\Subscribers;
 
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
+use App\Models\Task;
+use App\Models\TimeInterval;
 use Modules\RedmineIntegration\Entities\RedminePriority;
 use Modules\RedmineIntegration\Entities\RedmineProject;
 use Modules\RedmineIntegration\Entities\RedmineTask;
@@ -24,35 +20,35 @@ class EventObserver
         $this->redmineTaskService = $redmineTaskService;
     }
 
-    public function taskEditionAfter(array $data): void
+    public function taskEditionAfter(Task $data): void
     {
-        if ($redmineTask = RedmineTask::whereTaskId($data[0]->id)->first()) {
+        if ($redmineTask = RedmineTask::whereTaskId($data->id)->first()) {
             $redmineProject = RedmineProject::whereRedmineInstanceId($redmineTask->redmine_instance_id)
-                ->where('project_id', '=', $data[0]->project_id)
+                ->where('project_id', '=', $data->project_id)
                 ->firstOrFail();
 
-            $redmineUser = RedmineUser::whereRedmineInstanceId($redmineTask->redmine_instance_id)
-                ->where('user_id', '=', $data[0]->user_id)
-                ->firstOrFail();
+            $redmineUsers = RedmineUser::whereRedmineInstanceId($redmineTask->redmine_instance_id)
+                ->whereIn('user_id', $data->users->pluck('id'))
+                ->pluck('redmine_user_id');
 
             $redminePriority = RedminePriority::whereRedmineInstanceId($redmineTask->redmine_instance_id)
-                ->where('priority_id', '=', $data[0]->priority_id)
+                ->where('priority_id', '=', $data->priority_id)
                 ->firstOrFail();
 
             $this->redmineTaskService->updateRedmineTask(
                 $redmineTask,
                 $redmineProject->redmine_project_id,
-                $redmineUser->redmine_user_id,
+                $redmineUsers->all(),
                 $redminePriority->redmine_priority_id,
                 $data[0]
             );
         }
     }
 
-    public function taskEdition(array $data): void
+    public function taskEdition(Task $data): void
     {
         abort_if(
-            optional(optional(RedmineTask::whereTaskId($data[0]->id)->first())->redmineInstance)->sync_type === 'cron',
+            optional(optional(RedmineTask::whereTaskId($data->id)->first())->redmineInstance)->sync_type === 'cron',
             403,
             'Access denied to edit a task from Redmine integration'
         );
@@ -67,13 +63,13 @@ class EventObserver
         );
     }
 
-    public function intervalCreation(array $data): void
+    public function intervalCreation(TimeInterval $data): void
     {
-        $taskRelation = RedmineTask::whereTaskId($data[0]->task_id)->first();
+        $taskRelation = RedmineTask::whereTaskId($data->task_id)->first();
         if (isset($taskRelation, $taskRelation->redmineInstance)) {
             RedmineTimeInterval::create([
                 'redmine_instance_id' => $taskRelation->redmineInstance->id,
-                'time_interval_id' => $data[0]->id,
+                'time_interval_id' => $data->id,
             ]);
         }
     }
