@@ -13,7 +13,7 @@ use Modules\RedmineIntegration\Entities\RedmineProject;
 use Modules\RedmineIntegration\Entities\RedmineStatus;
 use Modules\RedmineIntegration\Entities\RedmineTask;
 use Modules\RedmineIntegration\Entities\RedmineUser;
-use Redmine\Client\NativeCurlClient;
+use Redmine\Client\Client;
 
 class RedmineTaskService
 {
@@ -127,7 +127,7 @@ class RedmineTaskService
 
     public function synchronize(RedmineInstance $redmineInstance): void
     {
-        $client = new NativeCurlClient($redmineInstance->url, $redmineInstance->api_key);
+        $client = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $redmineInstance->api_key]);
         $response = $client->getApi('issue')->all(['status_id' => '*', 'limit' => 1]);
         if (empty($response['total_count'])) {
             return;
@@ -285,7 +285,7 @@ class RedmineTaskService
         Task $task
     ): void {
         $redmineInstance = $redmineTask->redmineInstance;
-        $client = new NativeCurlClient($redmineInstance->url, $redmineInstance->api_key);
+        $client = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $redmineInstance->api_key]);
         $client->getApi('issue')->update($redmineTask->redmine_issue_id, [
             'project_id' => $redmineProjectId,
             'subject' => $task->task_name,

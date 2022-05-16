@@ -3,14 +3,14 @@
 namespace Modules\RedmineIntegration\Services;
 
 use App\Models\Status;
-use Exception;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedmineStatus;
-use Redmine\Client;
+use Redmine\Client\Client;
+use RuntimeException;
 
 class RedmineStatusService
 {
-    protected function updateStatus(int $redmineInstanceId, int $redmineStatusId, string $name, bool $isClosed)
+    protected function updateStatus(int $redmineInstanceId, int $redmineStatusId, string $name, bool $isClosed): void
     {
         $existingRedmineStatus = RedmineStatus::where([
             'redmine_instance_id' => $redmineInstanceId,
@@ -34,12 +34,12 @@ class RedmineStatusService
         }
     }
 
-    public function synchronize(RedmineInstance $redmineInstance)
+    public function synchronize(RedmineInstance $redmineInstance): void
     {
-        $client = new Client($redmineInstance->url, $redmineInstance->api_key);
-        $response = $client->issue_status->all();
+        $client = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $redmineInstance->api_key]);
+        $response = $client->getApi('issue_status')->all();
         if (!is_array($response) || !isset($response['issue_statuses'])) {
-            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
+            throw new RuntimeException('Invalid credentials or Redmine not available. Please contact your administrator');
         }
 
         foreach ($response['issue_statuses'] as $status) {

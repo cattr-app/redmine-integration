@@ -3,10 +3,10 @@
 namespace Modules\RedmineIntegration\Services;
 
 use App\Models\Priority;
-use Exception;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedminePriority;
-use Redmine\Client;
+use Redmine\Client\Client;
+use RuntimeException;
 
 class RedminePriorityService
 {
@@ -33,12 +33,12 @@ class RedminePriorityService
         }
     }
 
-    public function synchronize(RedmineInstance $redmineInstance)
+    public function synchronize(RedmineInstance $redmineInstance): void
     {
-        $client = new Client($redmineInstance->url, $redmineInstance->api_key);
-        $response = $client->issue_priority->all();
+        $client = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $redmineInstance->api_key]);
+        $response = $client->getApi('issue_priority')->all();
         if (!is_array($response) || !isset($response['issue_priorities'])) {
-            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
+            throw new RuntimeException('Invalid credentials or Redmine not available. Please contact your administrator');
         }
 
         foreach ($response['issue_priorities'] as $priority) {

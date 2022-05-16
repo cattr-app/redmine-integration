@@ -6,7 +6,8 @@ use App\Models\Project;
 use Exception;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedmineProject;
-use Redmine\Client;
+use Redmine\Client\Client;
+use RuntimeException;
 
 class RedmineProjectService
 {
@@ -56,16 +57,16 @@ class RedmineProjectService
 
     public function synchronize(RedmineInstance $redmineInstance, bool $createInternalProjects = true)
     {
-        $client = new Client($redmineInstance->url, $redmineInstance->api_key);
-        $response = $client->project->all(['limit' => 1]);
+        $client = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $redmineInstance->api_key]);
+        $response = $client->getApi('project')->all(['limit' => 1]);
         if (empty($response['total_count'])) {
             return;
         }
 
         $count = $response['total_count'];
-        $response = $client->project->all(['limit' => $count]);
+        $response = $client->getApi('project')->all(['limit' => $count]);
         if (!is_array($response) || !isset($response['projects'])) {
-            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
+            throw new RuntimeException('Invalid credentials or Redmine not available. Please contact your administrator');
         }
 
         foreach ($response['projects'] as $project) {

@@ -4,58 +4,57 @@ namespace Modules\RedmineIntegration\Services;
 
 use App\Models\User;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedmineUser;
 use Modules\RedmineIntegration\Notifications\Unauthorized;
-use Redmine\Client;
+use Redmine\Client\Client;
+use RuntimeException;
 
 class RedmineUserService
 {
-    public function create(RedmineInstance $instance, array $data)
+    public function create(RedmineInstance $instance, array $data): Model|RedmineUser
     {
         if ($data['auth_method'] === 'basic') {
-            $client = new Client($instance->url, $data['auth_login'], $data['auth_password']);
+            $client = app(Client::class, ['url' => $instance->url, 'apikeyOrUsername' => $data['auth_login'], 'password' => $data['auth_password']]);
         } elseif ($data['auth_method'] === 'api_key') {
-            $client = new Client($instance->url, $data['auth_api_key']);
+            $client = app(Client::class, ['url' => $instance->url, 'apikeyOrUsername' => $data['auth_api_key']]);
         } else {
-            throw new Exception('Unknown auth_method');
+            throw new RuntimeException('Unknown auth_method');
         }
 
-        $redmineResponse = $client->user->getCurrentUser();
+        $redmineResponse = $client->getApi('user')->getCurrentUser();
         if (!isset($redmineResponse) || !is_array($redmineResponse)) {
-            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
+            throw new RuntimeException('Invalid credentials or Redmine not available. Please contact your administrator');
         }
 
-        $user = RedmineUser::updateOrCreate([
+        return RedmineUser::updateOrCreate([
             'redmine_instance_id' => $data['redmine_instance_id'],
             'redmine_user_id' => $redmineResponse['user']['id'],
         ], [
             'api_key' => $redmineResponse['user']['api_key'],
             'user_id' => Auth::id(),
         ]);
-
-        return $user;
     }
 
     public function checkAuth(RedmineInstance $instance, User $user): bool
     {
-        $relation = RedmineUser::where([
-            'redmine_instance_id' => $instance->id,
-            'user_id' => $user->id,
-        ])->first();
+        $relation = RedmineUser::whereRedmineInstanceId($instance->id)
+            ->where('user_id', '=', $user->id)
+            ->first();
         if (!isset($relation)) {
             return false;
         }
 
-        $client = new Client($instance->url, $relation->api_key);
-        $redmineResponse = $client->user->getCurrentUser();
+        $client = app(Client::class, ['url' => $instance->url, 'apikeyOrUsername' => $relation->api_key]);
+        $redmineResponse = $client->getApi('user')->getCurrentUser();
         if (isset($redmineResponse) && is_array($redmineResponse)) {
             return true;
-        } else {
-            $user->notify(new Unauthorized($instance));
-
-            return false;
         }
+
+        $user->notify(new Unauthorized($instance));
+
+        return false;
     }
 }

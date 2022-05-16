@@ -11,45 +11,14 @@ use Modules\RedmineIntegration\Services\RedmineStatusService;
 
 class SynchronizeStatuses extends Command
 {
-    /**
-     * The console command name.
-     *
-     * @var string
-     */
     protected $name = 'redmine:statuses';
+    protected $description = 'Synchronize statuses from redmine';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Synchronize statuses from redmine.';
-
-    protected RedmineStatusService $redmineStatusService;
-
-    /**
-     * Create a new command instance.
-     *
-     * @param RedmineStatusService $redmineStatusService
-     */
-    public function __construct(RedmineStatusService $redmineStatusService)
+    public function handle(RedmineStatusService $redmineService): void
     {
-        parent::__construct();
-
-        $this->redmineStatusService = $redmineStatusService;
-    }
-
-    /**
-     * Execute the console command.
-     */
-    public function handle(): void
-    {
-        try {
-            foreach (RedmineInstance::all() as $instance) {
-                $this->redmineStatusService->synchronize($instance);
-            }
-        } catch (ClientFactoryException $e) {
-            Log::info($e->getMessage());
-        }
+        $this->withProgressBar(
+            RedmineInstance::all(),
+            static fn($instance) => rescue(static fn() => $redmineService->synchronize($instance))
+        );
     }
 }

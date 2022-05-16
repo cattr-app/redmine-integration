@@ -6,14 +6,27 @@ use Exception;
 use Modules\RedmineIntegration\Entities\RedmineGroup;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedmineUser;
-use Redmine\Client;
+use Redmine\Client\Client;
 
 class RedmineGroupService
 {
+    public function synchronizeAll(RedmineInstance $redmineInstance)
+    {
+        $client = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $redmineInstance->api_key]);
+        $response = $client->getApi('group')->all();
+        if (!is_array($response)) {
+            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
+        }
+
+        foreach ($response['groups'] as $group) {
+            $this->synchronize($redmineInstance, $group['id']);
+        }
+    }
+
     public function synchronize(RedmineInstance $redmineInstance, int $groupId)
     {
-        $client = new Client($redmineInstance->url, $redmineInstance->api_key);
-        $response = $client->group->show($groupId, ['include' => 'users']);
+        $client = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $redmineInstance->api_key]);
+        $response = $client->getApi('group')->show($groupId, ['include' => 'users']);
         if (!is_array($response)) {
             throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
         }
@@ -30,18 +43,5 @@ class RedmineGroupService
         ], []);
 
         $group->users()->sync($userIds);
-    }
-
-    public function synchronizeAll(RedmineInstance $redmineInstance)
-    {
-        $client = new Client($redmineInstance->url, $redmineInstance->api_key);
-        $response = $client->group->all();
-        if (!is_array($response)) {
-            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
-        }
-
-        foreach ($response['groups'] as $group) {
-            $this->synchronize($redmineInstance, $group['id']);
-        }
     }
 }

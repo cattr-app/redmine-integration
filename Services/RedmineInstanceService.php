@@ -4,7 +4,8 @@ namespace Modules\RedmineIntegration\Services;
 
 use Exception;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
-use Redmine\Client;
+use Redmine\Client\Client;
+use RuntimeException;
 
 class RedmineInstanceService
 {
@@ -25,22 +26,19 @@ class RedmineInstanceService
     public function create(array $data): RedmineInstance
     {
         if ($data['auth_method'] === 'basic') {
-            $client = new Client($data['url'], $data['auth_login'], $data['auth_password']);
+            $client = app(Client::class, ['url' => $data['url'], 'apikeyOrUsername' => $data['auth_login'], 'password' => $data['auth_password']]);
         } elseif ($data['auth_method'] === 'api_key') {
-            $client = new Client($data['url'], $data['auth_api_key']);
+            $client = app(Client::class, ['url' => $data['url'], 'apikeyOrUsername' => $data['auth_api_key']]);
         } else {
-            throw new Exception('Unknown auth_method');
+            throw new RuntimeException('Unknown auth_method');
         }
 
-        $redmineResponse = $client->user->getCurrentUser();
+        $redmineResponse = $client->getApi('user')->getCurrentUser();
         if (!is_array($redmineResponse)) {
-            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
+            throw new RuntimeException('Invalid credentials or Redmine not available. Please contact your administrator');
         }
 
-        unset($data['auth_method']);
-        unset($data['auth_login']);
-        unset($data['auth_password']);
-        unset($data['auth_api_key']);
+        unset($data['auth_method'], $data['auth_login'], $data['auth_password'], $data['auth_api_key']);
 
         $data['api_key'] = $redmineResponse['user']['api_key'];
 
@@ -56,25 +54,22 @@ class RedmineInstanceService
     {
         if (isset($data['auth_method'])) {
             if ($data['auth_method'] === 'basic') {
-                $client = new Client($data['url'], $data['auth_login'], $data['auth_password']);
+                $client = app(Client::class, ['url' => $data['url'], 'apikeyOrUsername' => $data['auth_login'], 'password' => $data['auth_password']]);
             } elseif ($data['auth_method'] === 'api_key') {
-                $client = new Client($data['url'], $data['auth_api_key']);
+                $client = app(Client::class, ['url' => $data['url'], 'apikeyOrUsername' => $data['auth_api_key']]);
             } else {
-                throw new Exception('Unknown auth_method');
+                throw new RuntimeException('Unknown auth_method');
             }
 
-            $redmineResponse = $client->user->getCurrentUser();
+            $redmineResponse = $client->getApi('user')->getCurrentUser();
             if (!is_array($redmineResponse)) {
-                throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
+                throw new RuntimeException('Invalid credentials or Redmine not available. Please contact your administrator');
             }
 
             $data['api_key'] = $redmineResponse['user']['api_key'];
         }
 
-        unset($data['auth_method']);
-        unset($data['auth_login']);
-        unset($data['auth_password']);
-        unset($data['auth_api_key']);
+        unset($data['auth_method'], $data['auth_login'], $data['auth_password'], $data['auth_api_key']);
 
         /** @var RedmineInstance $instance */
         $instance = RedmineInstance::find($id);

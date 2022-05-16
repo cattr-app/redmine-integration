@@ -16,6 +16,8 @@ use Modules\RedmineIntegration\Console\SynchronizeTime;
 use Modules\RedmineIntegration\Http\Middleware\ValidateSignature;
 use Modules\RedmineIntegration\Subscribers\EventObserver;
 use Modules\RedmineIntegration\Subscribers\FilterObserver;
+use Redmine\Client\Client;
+use Redmine\Client\NativeCurlClient;
 
 class RedmineIntegrationServiceProvider extends ServiceProvider
 {
@@ -73,6 +75,8 @@ class RedmineIntegrationServiceProvider extends ServiceProvider
 
         $this->booting(static fn() => Event::subscribe(EventObserver::class));
         $this->booting(static fn() => Filter::subscribe(FilterObserver::class));
+
+        $this->app->bind(Client::class, NativeCurlClient::class);
     }
 
     /**

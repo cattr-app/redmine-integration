@@ -2,57 +2,20 @@
 
 namespace Modules\RedmineIntegration\Console;
 
-use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
-use Modules\RedmineIntegration\Exceptions\ClientFactoryException;
 use Modules\RedmineIntegration\Services\RedmineTimeService;
 
-/**
- * Class SynchronizeTime
- */
 class SynchronizeTime extends Command
 {
-    /**
-     * The console command name.
-     *
-     * @var string
-     */
     protected $name = 'redmine:time';
+    protected $description = 'Synchronize time to redmine';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Synchronize time to redmine.';
-
-    protected RedmineTimeService $redmineTimeService;
-
-    /**
-     * Create a new command instance.
-     *
-     * SynchronizeTasks constructor.
-     */
-    public function __construct(RedmineTimeService $redmineTimeService)
+    public function handle(RedmineTimeService $redmineService): void
     {
-        parent::__construct();
-
-        $this->redmineTimeService = $redmineTimeService;
-    }
-
-    /**
-     * Execute the console command.
-     */
-    public function handle(): void
-    {
-        try {
-            foreach (RedmineInstance::all() as $instance) {
-                $this->redmineTimeService->synchronize($instance);
-            }
-        } catch (Exception $e) {
-            Log::info($e->getMessage());
-        }
+        $this->withProgressBar(
+            RedmineInstance::all(),
+            static fn($instance) => rescue(static fn() => $redmineService->synchronize($instance))
+        );
     }
 }

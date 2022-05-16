@@ -9,16 +9,15 @@ use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedmineTask;
 use Modules\RedmineIntegration\Entities\RedmineTimeInterval;
 use Modules\RedmineIntegration\Entities\RedmineUser;
-use Redmine\Client;
-use SimpleXMLElement;
+use Redmine\Client\Client;
 
 class RedmineTimeService
 {
-    public function synchronize(RedmineInstance $redmineInstance)
+    public function synchronize(RedmineInstance $redmineInstance): void
     {
-        $relations = RedmineTimeInterval::with('timeInterval')->where([
-            'redmine_instance_id' => $redmineInstance->id,
-        ])->get();
+        $relations = RedmineTimeInterval::whereRedmineInstanceId($redmineInstance->id)
+            ->with('timeInterval')
+            ->get();
 
         $groupedRelations = [];
         foreach ($relations as $relation) {
@@ -31,10 +30,9 @@ class RedmineTimeService
             $userId = $relation->timeInterval->user_id;
             $date = Carbon::parse($relation->timeInterval->start_at)->format('Y-m-d');
 
-            $task = RedmineTask::where([
-                'redmine_instance_id' => $redmineInstance->id,
-                'task_id' => $relation->timeInterval->task_id,
-            ])->first();
+            $task = RedmineTask::whereRedmineInstanceId($redmineInstance->id)
+                ->where('task_id', '=', $relation->timeInterval->task_id)
+                ->first();
             if (!isset($task)) {
                 $relation->delete();
                 continue;
@@ -45,23 +43,23 @@ class RedmineTimeService
         }
 
         foreach ($groupedRelations as $userId => $userRelations) {
-            $user = RedmineUser::where([
-                'redmine_instance_id' => $redmineInstance->id,
-                'user_id' => $userId,
-            ])->first();
+            $user = RedmineUser::whereRedmineInstanceId($redmineInstance->id)
+                ->where('user_id', '=', $userId)
+                ->first();
 
             if (!isset($user)) {
                 continue;
             }
 
-            $userClient = new Client($redmineInstance->url, $user->api_key);
+            $userClient = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $user->api_key]);
+
             foreach ($userRelations as $date => $dateRelations) {
                 $this->syncUserIntervals($userId, $userClient, $date, $dateRelations);
             }
         }
     }
 
-    private function syncUserIntervals(int $userId, Client $client, string $date, array $relations)
+    private function syncUserIntervals(int $userId, Client $client, string $date, array $relations): void
     {
         foreach ($relations as $issueId => $taskRelations) {
             $duration = 0;
@@ -72,8 +70,7 @@ class RedmineTimeService
             }
 
             try {
-                /** @var SimpleXMLElement|false $result */
-                $result = $client->time_entry->create([
+                $result = $client->getApi('time_entry')->create([
                     'issue_id' => $issueId,
                     'spent_on' => $date,
                     'hours' => $duration / 3600.0,

@@ -3,47 +3,19 @@
 namespace Modules\RedmineIntegration\Console;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
-use Modules\RedmineIntegration\Exceptions\ClientFactoryException;
 use Modules\RedmineIntegration\Services\RedmineProjectService;
 
 class SynchronizeProjects extends Command
 {
-    /**
-     * The console command name.
-     *
-     * @var string
-     */
     protected $name = 'redmine:projects';
+    protected $description = 'Synchronize projects from redmine';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Synchronize projects from redmine.';
-
-    protected RedmineProjectService $redmineProjectService;
-
-    public function __construct(RedmineProjectService $redmineProjectService)
+    public function handle(RedmineProjectService $redmineService): void
     {
-        parent::__construct();
-
-        $this->redmineProjectService = $redmineProjectService;
-    }
-
-    /**
-     * Execute the console command.
-     */
-    public function handle(): void
-    {
-        try {
-            foreach (RedmineInstance::all() as $instance) {
-                $this->redmineProjectService->synchronize($instance);
-            }
-        } catch (ClientFactoryException $e) {
-            Log::info($e->getMessage());
-        }
+        $this->withProgressBar(
+            RedmineInstance::all(),
+            static fn($instance) => rescue(static fn() => $redmineService->synchronize($instance))
+        );
     }
 }
