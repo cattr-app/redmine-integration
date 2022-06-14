@@ -3,6 +3,7 @@
 namespace Modules\RedmineIntegration\Entities;
 
 use App\Models\TimeInterval;
+use App\Scopes\TimeIntervalAccessScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -51,6 +52,6 @@ class RedmineTimeInterval extends Model
 
     public function timeInterval(): BelongsTo
     {
-        return $this->belongsTo(TimeInterval::class, 'time_interval_id');
+        return $this->belongsTo(TimeInterval::class, 'time_interval_id')->withoutGlobalScope(TimeIntervalAccessScope::class);
     }
 }

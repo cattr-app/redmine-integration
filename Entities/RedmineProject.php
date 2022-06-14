@@ -3,6 +3,7 @@
 namespace Modules\RedmineIntegration\Entities;
 
 use App\Models\Project;
+use App\Scopes\ProjectAccessScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -58,6 +59,6 @@ class RedmineProject extends Model
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(Project::class, 'project_id');
+        return $this->belongsTo(Project::class, 'project_id')->withoutGlobalScope(ProjectAccessScope::class);
     }
 }

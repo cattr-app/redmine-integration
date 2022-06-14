@@ -3,6 +3,7 @@
 namespace Modules\RedmineIntegration\Entities;
 
 use App\Models\Task;
+use App\Scopes\TaskAccessScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -55,6 +56,6 @@ class RedmineTask extends Model
 
     public function task(): BelongsTo
     {
-        return $this->belongsTo(Task::class, 'task_id');
+        return $this->belongsTo(Task::class, 'task_id')->withoutGlobalScope(TaskAccessScope::class);
     }
 }
