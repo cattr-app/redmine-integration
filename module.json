@@ -1,15 +1,18 @@
 {
-  "name": "RedmineIntegration",
-  "alias": "redmineintegration",
-  "description": "",
+  "name": "CattrRedmineIntegration",
+  "alias": "cattr_redmine_integration",
+  "description": "Redmine Integration for Cattr",
   "keywords": [],
   "active": 1,
-  "order": 0,
+  "priority": 10,
   "providers": [
-    "Modules\\RedmineIntegration\\Providers\\RedmineIntegrationServiceProvider"
+    "Modules\\RedmineIntegration\\Providers\\ModuleServiceProvider",
+    "Modules\\RedmineIntegration\\Providers\\BroadcastServiceProvider",
+    "Modules\\RedmineIntegration\\Providers\\RouterServiceProvider",
+    "Modules\\RedmineIntegration\\Providers\\ScheduleServiceProvider"
   ],
   "aliases": {},
-  "files": [
-  ],
-  "requires": []
+  "files": [],
+  "requires": [],
+  "minimumCoreVersion": "4.0"
 }

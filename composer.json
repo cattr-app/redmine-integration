@@ -1,24 +1,31 @@
 {
-  "type": "laravel-module",
   "name": "cattr/redmine_integration-module",
   "description": "Redmine Integration for Cattr",
-  "license": "SEE LICENSE IN LICENSE",
+  "type": "laravel-module",
+  "license": "SSPL-1.0",
   "authors": [
     {
-      "name": "AmazingCat",
-      "email": "to@amazingcat.net"
+      "name": "Alex V",
+      "email": "alex@cattr.app",
+      "role": "Maintainer"
     },
     {
-      "name": "Alex V",
-      "email": "alex@cattr.app"
+      "name": "Vitaliy Pavkin",
+      "email": "vitaly@amazingcat.net",
+      "role": "Maintainer"
+    },
+    {
+      "name": "Alexander Yanchuk",
+      "email": "alexander@amazingcat.net",
+      "role": "Developer"
     }
   ],
-  "extra": {
-    "laravel": {
-      "providers": [
-        "Modules\\RedmineIntegration\\Providers\\RedmineIntegrationServiceProvider"
-      ]
-    }
+  "support": {
+    "email": "git+cattr-core-modules-redmine-backend-271-issue-@amazingcat.net",
+    "forum": "https://community.cattr.app/public/",
+    "issues": "https://git.amazingcat.net/cattr/core/modules/redmine/backend/-/issues",
+    "chat": "https://cattr.app",
+    "source": "https://git.amazingcat.net/cattr/core/modules/redmine/backend"
   },
   "autoload": {
     "psr-4": {
