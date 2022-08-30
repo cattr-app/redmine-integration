@@ -222,6 +222,8 @@ class RedmineTaskService
             return;
         }
 
+        $redmineProject->project->users()->syncWithoutDetaching($userIds);
+
         $url = $redmineInstance->url;
         if (substr($url, -1) !== '/') {
             $url .= '/';
@@ -279,11 +281,12 @@ class RedmineTaskService
 
     public function updateRedmineTask(
         RedmineTask $redmineTask,
-        int $redmineProjectId,
-        array $redmineUsers,
-        int $redminePriorityId,
-        Task $task
-    ): void {
+        int         $redmineProjectId,
+        array       $redmineUsers,
+        int         $redminePriorityId,
+        Task        $task
+    ): void
+    {
         $redmineInstance = $redmineTask->redmineInstance;
         $client = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $redmineInstance->api_key]);
         $client->getApi('issue')->update($redmineTask->redmine_issue_id, [
