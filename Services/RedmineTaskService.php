@@ -69,6 +69,8 @@ class RedmineTaskService
 
         $userIds = collect($redmineUsers)->pluck('user_id');
 
+        $redmineProject->project->users()->syncWithoutDetaching($userIds);
+
         $url = $redmineInstance->url;
         if (substr($url, -1) !== '/') {
             $url .= '/';
