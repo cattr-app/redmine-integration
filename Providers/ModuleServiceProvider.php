@@ -24,7 +24,7 @@ class ModuleServiceProvider extends ServiceProvider
     /**
      * @var string $moduleName
      */
-    protected string $moduleName = 'RedmineIntegration';
+    protected string $moduleName = 'CattrRedmineIntegration';
 
     /**
      * @var string $moduleNameLower

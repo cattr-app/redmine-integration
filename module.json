@@ -8,7 +8,7 @@
   "providers": [
     "Modules\\RedmineIntegration\\Providers\\ModuleServiceProvider",
     "Modules\\RedmineIntegration\\Providers\\BroadcastServiceProvider",
-    "Modules\\RedmineIntegration\\Providers\\RouterServiceProvider",
+    "Modules\\RedmineIntegration\\Providers\\RouteServiceProvider",
     "Modules\\RedmineIntegration\\Providers\\ScheduleServiceProvider"
   ],
   "aliases": {},
