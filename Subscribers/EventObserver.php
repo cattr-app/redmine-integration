@@ -20,6 +20,15 @@ class EventObserver
         $this->redmineTaskService = $redmineTaskService;
     }
 
+    public function taskBeforeCreation($requestData): void
+    {
+        abort_if(
+            optional(RedmineProject::whereProjectId($requestData['project_id'])->first())->exists,
+            403,
+            'Access denied to create a task in Project from Redmine integration'
+        );
+    }
+
     public function taskEditionAfter(Task $data): void
     {
         if ($redmineTask = RedmineTask::whereTaskId($data->id)->first()) {
@@ -77,6 +86,7 @@ class EventObserver
     public function subscribe(): array
     {
         return [
+            'event.before.action.tasks.create' => [[__CLASS__, 'taskBeforeCreation']],
             'event.before.action.tasks.edit' => [[__CLASS__, 'taskEdition']],
             'event.after.action.tasks.edit' => [[__CLASS__, 'taskEditionAfter']],
             'event.before.action.task.destroy' => [[__CLASS__, 'taskDeletion']],
