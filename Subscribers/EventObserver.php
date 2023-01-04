@@ -2,6 +2,7 @@
 
 namespace Modules\RedmineIntegration\Subscribers;
 
+use App\Models\Project;
 use App\Models\Task;
 use App\Models\TimeInterval;
 use Modules\RedmineIntegration\Entities\RedminePriority;
@@ -63,12 +64,31 @@ class EventObserver
         );
     }
 
+    public function projectEdition(Project $data): void
+    {
+        abort_if(
+            RedmineProject::whereProjectId($data->id)->exists(),
+            403,
+            'Access denied to edit a project from Redmine integration'
+        );
+    }
+
+    public function projectMemberEdition(int $data): void
+    {
+        abort_if(
+            RedmineProject::whereProjectId($data)->exists(),
+            403,
+            'Access denied to edit a project from Redmine integration'
+        );
+    }
+
+
     public function taskDeletion(mixed $taskId): void
     {
         abort_if(
             RedmineTask::whereTaskId($taskId)->exists(),
             403,
-            'Access denied to delete a task from GitLab integration'
+            'Access denied to delete a task from Redmine integration'
         );
     }
 
@@ -88,6 +108,8 @@ class EventObserver
         return [
             'event.before.action.tasks.create' => [[__CLASS__, 'taskBeforeCreation']],
             'event.before.action.tasks.edit' => [[__CLASS__, 'taskEdition']],
+            'event.before.action.projects.edit' => [[__CLASS__, 'projectEdition']],
+            'event.before.action.projects_members.edit' => [[__CLASS__, 'projectMemberEdition']],
             'event.after.action.tasks.edit' => [[__CLASS__, 'taskEditionAfter']],
             'event.before.action.task.destroy' => [[__CLASS__, 'taskDeletion']],
             'event.after.action.intervals.create' => [[__CLASS__, 'intervalCreation']]
