@@ -2,7 +2,7 @@
 
 namespace Modules\RedmineIntegration\Providers;
 
-use Event;
+use CatEvent;
 use Filter;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Config;
@@ -69,10 +69,13 @@ class ModuleServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->booting(static fn() => Event::subscribe(EventObserver::class));
-        $this->booting(static fn() => Filter::subscribe(FilterObserver::class));
-
         $this->app->bind(Client::class, NativeCurlClient::class);
+    }
+
+    public static function registerEvents (): void
+    {
+        CatEvent::subscribe(EventObserver::class);
+        Filter::subscribe(FilterObserver::class);
     }
 
     /**
