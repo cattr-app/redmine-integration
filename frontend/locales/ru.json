@@ -1,0 +1,61 @@
+{
+  "settings": {
+    "redmine": {
+      "label": "Redmine Интеграция",
+      "enable": "Включить",
+      "url": "Redmine URL",
+      "api_key": "API Ключ",
+      "statuses": "Открытые статусы",
+      "priorities": "Приоритеты",
+      "sync_time": "Синхронизировать время в Redmine",
+      "message": {
+        "integration_disabled": "Redmine Интеграция не включена, пожалуйста, обратитесь к администратору.",
+        "wait_for_sync": "Некоторые настройки могут быть недоступны. Дождитесь окончания синхронизации. Это может занять не более 10 минут"
+      }
+    }
+  },
+  "tooltip": {
+    "open_statuses": "Выбранные статусы будут использоваться внутри Cattr как активные. Рекомендуется выбрать список статусов, иначе все синхронизированные задачи будут помечены как закрытые"
+  },
+  "authorize": {
+    "auth_type": "Тип авторизации",
+    "login_and_password": "Логин и пароль",
+    "api_key": "Ключ API",
+    "login": "Логин",
+    "password": "Пароль",
+    "ok": "Ok",
+    "cancel": "Отмена"
+  },
+  "instance": {
+    "priorities": "Приоритеты",
+    "statuses": "Статусы",
+    "projects": "Проекты",
+    "sync_type": "Тип синхронизации",
+    "cron": "CRON",
+    "webhook": "Webhook",
+    "sync_new_projects": "Синхронизировать новые проекты",
+    "no": "Нет",
+    "yes": "Да",
+    "project_sync_interval": "Интервал синхронизации проектов (минуты)",
+    "task_sync_interval": "Интервал синхронизации задач (минуты)",
+    "priority_sync_interval": "Интервал синхронизации приоритетов (минуты)",
+    "status_sync_interval": "Интервал синхронизации статусов (минуты)",
+    "submit": "Сохранить",
+    "low": "Низкий",
+    "normal": "Обычный",
+    "high": "Высокий",
+    "from_redmine": "Из Redmine",
+    "to_cattr": "В Cattr",
+    "url": "URL",
+    "redmine_plugin_required": "Чтобы использовать webhook-синхронизацию требуется плагин для Redmine",
+    "actions": "Действия",
+    "authorize": "Авторизоваться",
+    "reauthorize": "Переавторизоваться",
+    "create": "Создать",
+    "edit": "Редактировать"
+  },
+  "project_select": {
+    "create_new": "Создать новый",
+    "project_name": "Название проекта"
+  }
+}

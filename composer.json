@@ -6,7 +6,7 @@
   "authors": [
     {
       "name": "Alex V",
-      "email": "alex@cattr.app",
+      "email": "inbox@alexv-pro.ru",
       "role": "Maintainer"
     },
     {
@@ -21,15 +21,12 @@
     }
   ],
   "support": {
-    "email": "git+cattr-core-modules-redmine-backend-271-issue-@amazingcat.net",
-    "forum": "https://community.cattr.app/public/",
-    "issues": "https://git.amazingcat.net/cattr/core/modules/redmine/backend/-/issues",
-    "chat": "https://cattr.app",
-    "source": "https://git.amazingcat.net/cattr/core/modules/redmine/backend"
+    "issues": "https://github.com/cattr-app/redmine-integration/issues",
+    "source": "https://github.com/cattr-app/redmine-integration"
   },
   "autoload": {
     "psr-4": {
-      "Modules\\RedmineIntegration\\": ""
+      "Modules\\RedmineIntegration\\": "backend/"
     }
   },
   "require": {
@@ -38,5 +35,6 @@
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest"
-  }
+  },
+  "homepage": "https://github.com/cattr-app/redmine-integration"
 }

@@ -1,0 +1,61 @@
+{
+  "settings": {
+    "redmine": {
+      "label": "Redmine Integration",
+      "enable": "Enable",
+      "url": "Redmine URL",
+      "api_key": "API Key",
+      "statuses": "Open Statuses",
+      "priorities": "Priorities",
+      "sync_time": "Sync time to Redmine",
+      "message": {
+        "integration_disabled": "Redmine Integration is not enabled, please contact your administrator.",
+        "wait_for_sync": "Some settings may not be available. Wait for the synchronization to complete. This may take no more than 10 minutes."
+      }
+    }
+  },
+  "tooltip": {
+    "open_statuses": "The selected statuses will be used inside the Cattr as active. It is recommended to select a list of statuses, otherwise all synchronized tasks will be marked as closed"
+  },
+  "authorize": {
+    "auth_type": "Authentification type",
+    "login_and_password": "Login and password",
+    "api_key": "API key",
+    "login": "Login",
+    "password": "Password",
+    "ok": "Ok",
+    "cancel": "Cancel"
+  },
+  "instance": {
+    "priorities": "Priorities",
+    "statuses": "Statuses",
+    "projects": "Projects",
+    "sync_type": "Synchronization type",
+    "cron": "CRON",
+    "webhook": "Webhook",
+    "sync_new_projects": "Synchronize new projects",
+    "no": "No",
+    "yes": "Yes",
+    "project_sync_interval": "Project sync interval (minutes)",
+    "task_sync_interval": "Task sync interval (minutes)",
+    "priority_sync_interval": "Priority sync interval (minutes)",
+    "status_sync_interval": "Status sync interval (minutes)",
+    "submit": "Save",
+    "low": "Low",
+    "normal": "Normal",
+    "high": "High",
+    "from_redmine": "From Redmine",
+    "to_cattr": "To Cattr",
+    "url": "URL",
+    "redmine_plugin_required": "Redmine plugin required to use webhook synchronization",
+    "actions": "Actions",
+    "authorize": "Authorize",
+    "reauthorize": "Reauthorize",
+    "create": "Create",
+    "edit": "Edit"
+  },
+  "project_select": {
+    "create_new": "Create new",
+    "project_name": "Project Name"
+  }
+}
