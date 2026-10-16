@@ -92,6 +92,18 @@
         </div>
 
         <div v-show="instance.sync_type === 'webhook'" class="row">
+            <div class="col-6"><p class="label">{{ $t('instance.webhook_secret') }}</p></div>
+            <div class="col-18">
+                <at-input v-model="webhookSecret" type="password" :placeholder="$t('instance.webhook_secret_placeholder')" />
+                <p>{{ instance.webhook_secret_configured ? $t('instance.webhook_secret_saved') : $t('instance.webhook_secret_hint') }}</p>
+                <label>
+                    <input v-model="clearWebhookSecret" type="checkbox" />
+                    {{ $t('instance.webhook_secret_clear') }}
+                </label>
+            </div>
+        </div>
+
+        <div v-show="instance.sync_type === 'webhook'" class="row">
             <div class="col-6">
                 <p class="label">{{ $t('instance.sync_new_projects') }}</p>
             </div>
@@ -172,6 +184,8 @@
                 statusService: new StatusService(),
                 projectService: new ProjectService(),
                 instance: {},
+                webhookSecret: '',
+                clearWebhookSecret: false,
                 redminePriorities: [],
                 internalPriorities: [],
                 redmineStatuses: [],
@@ -239,8 +253,12 @@
             async submit() {
                 const id = this.$route.params.id;
 
+                const instanceData = { ...this.instance };
+                delete instanceData.webhook_secret_configured;
+                if (this.webhookSecret) instanceData.webhook_secret = this.webhookSecret;
+                if (this.clearWebhookSecret) instanceData.clear_webhook_secret = true;
                 try {
-                    await this.service.update(id, this.instance);
+                    await this.service.update(id, instanceData);
                     await this.service.bulkUpdatePriority(id, {
                         priorities: this.redminePriorities.map(priority => ({
                             id: priority.id,
@@ -251,7 +269,6 @@
                     this.$NotifyError(error);
                 }
 
-                await this.service.update(id, this.instance);
                 await this.service.bulkUpdateStatus(id, {
                     statuses: this.redmineStatuses.map(status => ({
                         id: status.id,

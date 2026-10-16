@@ -47,12 +47,16 @@
     "from_redmine": "From Redmine",
     "to_cattr": "To Cattr",
     "url": "URL",
-    "redmine_plugin_required": "Redmine plugin required to use webhook synchronization",
     "actions": "Actions",
     "authorize": "Authorize",
     "reauthorize": "Reauthorize",
     "create": "Create",
-    "edit": "Edit"
+    "edit": "Edit",
+    "webhook_secret": "Webhook secret",
+    "webhook_secret_hint": "At least 16 characters. Use the same secret in the Redmine 7 webhook settings.",
+    "webhook_secret_saved": "A secret is saved. Leave this field empty to keep it.",
+    "webhook_secret_placeholder": "New secret (optional)",
+    "webhook_secret_clear": "Clear the saved secret (CRON mode only)"
   },
   "project_select": {
     "create_new": "Create new",

@@ -78,11 +78,11 @@ class RedmineInstanceService
         $instance = RedmineInstance::find($id);
         $clearSecret = (bool) ($data['clear_webhook_secret'] ?? false);
         unset($data['clear_webhook_secret']);
-        if ($clearSecret && array_key_exists('webhook_secret', $data)) {
+        if ($clearSecret && !empty($data['webhook_secret'])) {
             throw ValidationException::withMessages(['webhook_secret' => 'Cannot replace and clear the secret together.']);
         }
         $secret = $clearSecret ? null : ($data['webhook_secret'] ?? $instance->webhook_secret);
-        $this->validateWebhookSecret($data['sync_type'], $secret);
+        $this->validateWebhookSecret($data['sync_type'] ?? $instance->sync_type, $secret);
         if ($clearSecret) {
             $data['webhook_secret'] = null;
         } elseif (empty($data['webhook_secret'])) {
