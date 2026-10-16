@@ -28,6 +28,10 @@ class RedmineTaskService
             'redmine_issue_id' => $redmineIssueId,
         ])->first();
 
+        if ($existingRedmineTask && $existingRedmineTask->task?->trashed()) {
+            return;
+        }
+
         $redmineProject = RedmineProject::where([
             'redmine_instance_id' => $redmineInstance->id,
             'redmine_project_id' => $data['project']['id'],
@@ -82,7 +86,7 @@ class RedmineTaskService
             if (isset($existingRedmineTask->task)) {
                 $existingRedmineTask->task->fill([
                     'task_name' => $data['subject'],
-                    'description' => $data['description'],
+                    'description' => $data['description'] ?? '',
                     'project_id' => $redmineProject->project_id,
                     'priority_id' => $redminePriority->priority_id,
                     'status_id' => $redmineStatus->status_id,
@@ -94,7 +98,7 @@ class RedmineTaskService
             } else {
                 $task = Task::create([
                     'task_name' => $data['subject'],
-                    'description' => $data['description'],
+                    'description' => $data['description'] ?? '',
                     'project_id' => $redmineProject->project_id,
                     'priority_id' => $redminePriority->priority_id,
                     'status_id' => $redmineStatus->status_id,
@@ -109,7 +113,7 @@ class RedmineTaskService
         } else {
             $task = Task::create([
                 'task_name' => $data['subject'],
-                'description' => $data['description'],
+                'description' => $data['description'] ?? '',
                 'project_id' => $redmineProject->project_id,
                 'priority_id' => $redminePriority->priority_id,
                 'status_id' => $redmineStatus->status_id,
@@ -160,6 +164,10 @@ class RedmineTaskService
             'redmine_issue_id' => $redmineIssueId,
         ])->first();
 
+        if ($existingRedmineTask && $existingRedmineTask->task?->trashed()) {
+            return;
+        }
+
         $redmineProject = RedmineProject::where([
             'redmine_instance_id' => $redmineInstance->id,
             'redmine_project_id' => $data['project']['id'],
@@ -175,10 +183,10 @@ class RedmineTaskService
             'redmine_priority_id' => $data['priority']['id'],
         ])->first();
 
-        if (isset($data['assignee'])) {
+        if (isset($data['assigned_to'])) {
             $redmineGroup = RedmineGroup::where([
                 'redmine_instance_id' => $redmineInstance->id,
-                'redmine_group_id' => $data['assignee']['id'],
+                'redmine_group_id' => $data['assigned_to']['id'],
             ])->first();
 
             if (isset($redmineGroup)) {
@@ -186,7 +194,7 @@ class RedmineTaskService
             } else {
                 $redmineUser = RedmineUser::where([
                     'redmine_instance_id' => $redmineInstance->id,
-                    'redmine_user_id' => $data['assignee']['id'],
+                    'redmine_user_id' => $data['assigned_to']['id'],
                 ])->first();
 
                 if (isset($redmineUser)) {
@@ -205,7 +213,7 @@ class RedmineTaskService
             if ($redmineInstance->sync_new_projects) {
                 $project = Project::create([
                     'name' => $data['project']['name'],
-                    'description' => $data['project']['description'],
+                    'description' => $data['project']['name'],
                     'source' => 'redmine',
                 ]);
             } else {
@@ -237,7 +245,7 @@ class RedmineTaskService
             if (isset($existingRedmineTask->task)) {
                 $existingRedmineTask->task->fill([
                     'task_name' => $data['subject'],
-                    'description' => $data['description'],
+                    'description' => $data['description'] ?? '',
                     'project_id' => $redmineProject->project_id,
                     'priority_id' => $redminePriority->priority_id,
                     'status_id' => $redmineStatus->status_id,
@@ -249,7 +257,7 @@ class RedmineTaskService
             } else {
                 $task = Task::create([
                     'task_name' => $data['subject'],
-                    'description' => $data['description'],
+                    'description' => $data['description'] ?? '',
                     'project_id' => $redmineProject->project_id,
                     'priority_id' => $redminePriority->priority_id,
                     'status_id' => $redmineStatus->status_id,
@@ -264,7 +272,7 @@ class RedmineTaskService
         } else {
             $task = Task::create([
                 'task_name' => $data['subject'],
-                'description' => $data['description'],
+                'description' => $data['description'] ?? '',
                 'project_id' => $redmineProject->project_id,
                 'priority_id' => $redminePriority->priority_id,
                 'status_id' => $redmineStatus->status_id,
@@ -278,6 +286,25 @@ class RedmineTaskService
                 'redmine_instance_id' => $redmineInstance->id,
                 'task_id' => $task->id,
             ]);
+        }
+    }
+
+    /**
+     * Mark a deleted Redmine issue as soft-deleted in Cattr, keeping the
+     * redmine_tasks link and historical time intervals. Repeated deletes are safe.
+     */
+    public function deleteTaskFromWebhook(RedmineInstance $redmineInstance, int $redmineIssueId): void
+    {
+        $relation = RedmineTask::where([
+            'redmine_instance_id' => $redmineInstance->id,
+            'redmine_issue_id' => $redmineIssueId,
+        ])->first();
+
+        if ($relation && $relation->task_id) {
+            // Bypass Task::deleting, which would also delete historical intervals.
+            Task::withoutGlobalScopes()->whereKey($relation->task_id)
+                ->whereNull('deleted_at')
+                ->update(['deleted_at' => now()]);
         }
     }
 

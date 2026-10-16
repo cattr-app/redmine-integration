@@ -6,6 +6,7 @@ use Exception;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Redmine\Client\Client;
 use RuntimeException;
+use Illuminate\Validation\ValidationException;
 
 class RedmineInstanceService
 {
@@ -42,6 +43,8 @@ class RedmineInstanceService
 
         $data['api_key'] = $redmineResponse['user']['api_key'];
 
+        $this->validateWebhookSecret($data['sync_type'], $data['webhook_secret'] ?? null);
+
         $instance = RedmineInstance::create($data);
         $this->redminePriorityService->synchronize($instance);
         $this->redmineStatusService->synchronize($instance);
@@ -73,9 +76,29 @@ class RedmineInstanceService
 
         /** @var RedmineInstance $instance */
         $instance = RedmineInstance::find($id);
+        $clearSecret = (bool) ($data['clear_webhook_secret'] ?? false);
+        unset($data['clear_webhook_secret']);
+        if ($clearSecret && array_key_exists('webhook_secret', $data)) {
+            throw ValidationException::withMessages(['webhook_secret' => 'Cannot replace and clear the secret together.']);
+        }
+        $secret = $clearSecret ? null : ($data['webhook_secret'] ?? $instance->webhook_secret);
+        $this->validateWebhookSecret($data['sync_type'], $secret);
+        if ($clearSecret) {
+            $data['webhook_secret'] = null;
+        } elseif (empty($data['webhook_secret'])) {
+            unset($data['webhook_secret']);
+        }
         $instance->fill($data);
         $instance->save();
 
         return $instance;
+    }
+    private function validateWebhookSecret(string $syncType, ?string $secret): void
+    {
+        if ($syncType === 'webhook' && ($secret === null || strlen($secret) < 16)) {
+            throw ValidationException::withMessages([
+                'webhook_secret' => 'A webhook secret of at least 16 characters is required for webhook synchronization.',
+            ]);
+        }
     }
 }
