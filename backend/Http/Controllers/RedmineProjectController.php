@@ -3,6 +3,7 @@
 namespace Modules\RedmineIntegration\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Modules\RedmineIntegration\Entities\RedmineProject;
 use Modules\RedmineIntegration\Http\Requests\UpdateRedmineProject;
 
@@ -37,13 +38,21 @@ class RedmineProjectController extends AbstractRedmineController
     public function update(UpdateRedmineProject $request, $instanceId, $id): JsonResponse
     {
         /** @var RedmineProject $item */
-        $item = RedmineProject::where([
-            'redmine_instance_id' => $instanceId,
-            'id'                  => $id,
-        ])->firstOrFail();
+        $item = DB::transaction(function () use ($instanceId, $id, $request): RedmineProject {
+            $item = RedmineProject::where([
+                'redmine_instance_id' => $instanceId,
+                'id' => $id,
+            ])->lockForUpdate()->firstOrFail();
 
-        $item->fill($request->validated());
-        $item->save();
+            $data = $request->validated();
+            $item->fill($data);
+            if (array_key_exists('project_id', $data)) {
+                $item->manual_unlinked = $data['project_id'] === null;
+            }
+            $item->save();
+
+            return $item;
+        });
 
         return response()->json($item);
     }
