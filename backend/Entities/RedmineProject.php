@@ -41,6 +41,7 @@ class RedmineProject extends Model
         'name',
         'redmine_instance_id',
         'project_id',
+        'manual_unlinked',
     ];
 
     /**
@@ -50,6 +51,7 @@ class RedmineProject extends Model
         'redmine_project_id' => 'int',
         'redmine_instance_id' => 'int',
         'project_id' => 'int',
+        'manual_unlinked' => 'boolean',
     ];
 
     public function redmineInstance(): BelongsTo
