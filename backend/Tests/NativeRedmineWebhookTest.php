@@ -50,10 +50,40 @@ class NativeRedmineWebhookTest extends TestCase
     public function test_signature_required_and_validated(): void
     {
         $instance = $this->instance();
-        $body = json_encode(['type' => 'issue.deleted', 'data' => ['issue' => ['id' => 123]]]);
+        $body = json_encode(['type' => 'issue.deleted', 'data' => ['issue' => ['id' => 123]]], JSON_THROW_ON_ERROR);
 
+        $this->call(
+            'POST',
+            "/api/integration/redmine/{$instance->id}/webhook",
+            [],
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            $body
+        )->assertStatus(403);
         $this->signedRequest($instance, $body, 'sha256=' . str_repeat('0', 64))->assertStatus(403);
         $this->signedRequest($instance, $body)->assertStatus(204);
+    }
+
+    public function test_empty_secret_is_rejected_even_with_a_matching_signature(): void
+    {
+        $instance = $this->instance('');
+        $body = json_encode(['type' => 'issue.deleted', 'data' => ['issue' => ['id' => 1]]], JSON_THROW_ON_ERROR);
+
+        $this->signedRequest($instance, $body, 'sha256=' . hash_hmac('sha256', $body, ''))
+            ->assertStatus(403);
+    }
+
+    public function test_configured_flag_does_not_decrypt_broken_ciphertext(): void
+    {
+        $instance = $this->instance();
+        $instance->setRawAttributes(array_merge($instance->getAttributes(), [
+            'webhook_secret' => 'invalid-encrypted-value',
+        ]));
+
+        $this->assertTrue($instance->webhook_secret_configured);
+        $this->assertTrue($instance->toArray()['webhook_secret_configured']);
+        $this->assertArrayNotHasKey('webhook_secret', $instance->toArray());
     }
 
     public function test_issue_deleted_soft_deletes_linked_task_and_is_idempotent(): void
@@ -66,7 +96,7 @@ class NativeRedmineWebhookTest extends TestCase
             'task_id' => $task->id,
         ]);
 
-        $body = json_encode(['type' => 'issue.deleted', 'data' => ['issue' => ['id' => 123]]]);
+        $body = json_encode(['type' => 'issue.deleted', 'data' => ['issue' => ['id' => 123]]], JSON_THROW_ON_ERROR);
         $this->signedRequest($instance, $body)->assertStatus(204);
         $this->signedRequest($instance, $body)->assertStatus(204);
 
@@ -130,7 +160,7 @@ class NativeRedmineWebhookTest extends TestCase
             'duration' => 300,
         ]);
 
-        $body = json_encode(['type' => 'issue.deleted', 'data' => ['issue' => ['id' => 123]]]);
+        $body = json_encode(['type' => 'issue.deleted', 'data' => ['issue' => ['id' => 123]]], JSON_THROW_ON_ERROR);
         $this->signedRequest($instance, $body)->assertStatus(204);
         $this->signedRequest($instance, $body)->assertStatus(204);
 

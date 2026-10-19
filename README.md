@@ -70,7 +70,7 @@ php artisan list redmine
 php artisan schedule:list
 ```
 
-Check instance connectivity and mappings in the interface, then verify synchronization against a test Redmine instance. The existing test in `backend/Tests/GeneratesRequestSignatureTest.php` requires Cattr's application test harness; this repository does not provide a standalone PHPUnit setup.
+Check instance connectivity and mappings in the interface, then verify synchronization against a test Redmine instance. The native webhook test in `backend/Tests/NativeRedmineWebhookTest.php` requires Cattr's application test harness; this repository does not provide a standalone PHPUnit setup.
 
 ## Repository and Publishing
 

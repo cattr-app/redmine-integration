@@ -77,13 +77,19 @@
                     ...authData,
                 };
 
-                const result = await this.service.create(data);
+                let result;
+                try {
+                    result = await this.service.create(data);
+                } catch (error) {
+                    this.$NotifyError(error);
+                    return;
+                }
+
+                this.showAuthPopup = false;
                 this.$router.push({
                     name: 'AmazingCat_RedmineIntegration.company.redmine.edit',
                     params: { id: result.id },
                 });
-
-                this.showAuthPopup = false;
             },
         },
     };

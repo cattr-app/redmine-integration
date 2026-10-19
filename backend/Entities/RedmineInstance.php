@@ -74,6 +74,6 @@ class RedmineInstance extends Model
     ];
     public function getWebhookSecretConfiguredAttribute(): bool
     {
-        return !empty($this->webhook_secret);
+        return !empty($this->attributes['webhook_secret'] ?? null);
     }
 }
