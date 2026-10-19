@@ -21,26 +21,19 @@ class RedmineProjectService
         bool $createInternalProjects
     ): void {
         DB::transaction(function () use ($redmineInstanceId, $redmineProjectId, $name, $createInternalProjects): void {
+            // Lock in the same order as webhook synchronization to avoid deadlocks.
+            RedmineInstance::whereKey($redmineInstanceId)->lockForUpdate()->firstOrFail();
             $mapping = RedmineProject::where([
                 'redmine_instance_id' => $redmineInstanceId,
                 'redmine_project_id' => $redmineProjectId,
             ])->lockForUpdate()->first();
 
             if (!$mapping) {
-                // Serialize discovery of a new mapping against concurrent webhooks.
-                // Both code paths acquire the instance row before mapping lookup.
-                $instance = RedmineInstance::whereKey($redmineInstanceId)->lockForUpdate()->firstOrFail();
-                $mapping = RedmineProject::where([
+                $mapping = new RedmineProject([
                     'redmine_instance_id' => $redmineInstanceId,
                     'redmine_project_id' => $redmineProjectId,
-                ])->lockForUpdate()->first();
-                if (!$mapping) {
-                    $mapping = new RedmineProject([
-                        'redmine_instance_id' => $redmineInstanceId,
-                        'redmine_project_id' => $redmineProjectId,
-                        'manual_unlinked' => false,
-                    ]);
-                }
+                    'manual_unlinked' => false,
+                ]);
             }
 
             $mapping->name = $name;
