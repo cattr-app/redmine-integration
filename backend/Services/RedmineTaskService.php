@@ -33,6 +33,12 @@ class RedmineTaskService
             'redmine_project_id' => $data['project']['id'],
         ])->first();
 
+        // An external project may intentionally have no Cattr counterpart.
+        // Deleted Cattr projects are also hidden by the relation's SoftDeletes scope.
+        if (!$redmineProject || !$redmineProject->project) {
+            return;
+        }
+
         $redmineStatus = RedmineStatus::where([
             'redmine_instance_id' => $redmineInstance->id,
             'redmine_status_id' => $data['status']['id'],
@@ -220,7 +226,20 @@ class RedmineTaskService
             ]);
         }
 
-        if (!isset($redmineProject->project_id)) {
+        // Initial instance registration stores all external projects without a
+        // Cattr mapping. Link those projects on the first webhook when enabled.
+        if ($redmineProject->project_id === null && $redmineInstance->sync_new_projects) {
+            $project = Project::create([
+                'name' => $data['project']['name'],
+                'description' => $data['project']['name'],
+                'source' => 'redmine',
+            ]);
+            $redmineProject->project_id = $project->id;
+            $redmineProject->save();
+        }
+
+        // Do not recreate a deliberately deleted Cattr project.
+        if (!$redmineProject->project) {
             return;
         }
 
