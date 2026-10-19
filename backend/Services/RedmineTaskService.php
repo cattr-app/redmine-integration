@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\Task;
 use Exception;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Modules\RedmineIntegration\Entities\RedmineGroup;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedminePriority;
@@ -138,7 +139,7 @@ class RedmineTaskService
         $client = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $redmineInstance->api_key]);
 
         foreach (RedminePaginator::items(
-            static fn (int $offset, int $limit): array => $client->getApi('issue')->all([
+            static fn (int $offset, int $limit) => $client->getApi('issue')->all([
                 'status_id' => '*',
                 'offset' => $offset,
                 'limit' => $limit,
@@ -204,36 +205,40 @@ class RedmineTaskService
 
         $userIds = collect($redmineUsers)->pluck('user_id');
 
-        if (!isset($redmineProject)) {
-            if ($redmineInstance->sync_new_projects) {
-                $project = Project::create([
-                    'name' => $data['project']['name'],
-                    'description' => $data['project']['description'],
-                    'source' => 'redmine',
+        // Serialize project discovery and linking for concurrent webhooks and cron.
+        // Newly registered mappings are eligible; manually cleared ones are not.
+        $redmineProject = DB::transaction(function () use ($redmineInstance, $data): RedmineProject {
+            RedmineInstance::whereKey($redmineInstance->id)->lockForUpdate()->firstOrFail();
+
+            $mapping = RedmineProject::where([
+                'redmine_instance_id' => $redmineInstance->id,
+                'redmine_project_id' => $data['project']['id'],
+            ])->lockForUpdate()->first();
+
+            if (!$mapping) {
+                $mapping = new RedmineProject([
+                    'redmine_project_id' => $data['project']['id'],
+                    'redmine_instance_id' => $redmineInstance->id,
+                    'manual_unlinked' => false,
                 ]);
-            } else {
-                $project = null;
             }
 
-            $redmineProject = RedmineProject::create([
-                'redmine_project_id' => $data['project']['id'],
-                'name' => $data['project']['name'],
-                'redmine_instance_id' => $redmineInstance->id,
-                'project_id' => isset($project) ? $project->id : null,
-            ]);
-        }
+            $mapping->name = $data['project']['name'];
+            if ($mapping->project_id === null
+                && $mapping->manual_unlinked === false
+                && $redmineInstance->sync_new_projects) {
+                $project = Project::create([
+                    'name' => $data['project']['name'],
+                    'description' => $data['project']['description'] ?? $data['project']['name'],
+                    'source' => 'redmine',
+                ]);
+                $mapping->project_id = $project->id;
+            }
 
-        // Initial instance registration stores all external projects without a
-        // Cattr mapping. Link those projects on the first webhook when enabled.
-        if ($redmineProject->project_id === null && $redmineInstance->sync_new_projects) {
-            $project = Project::create([
-                'name' => $data['project']['name'],
-                'description' => $data['project']['name'],
-                'source' => 'redmine',
-            ]);
-            $redmineProject->project_id = $project->id;
-            $redmineProject->save();
-        }
+            $mapping->save();
+
+            return $mapping;
+        });
 
         // Do not recreate a deliberately deleted Cattr project.
         if (!$redmineProject->project) {
