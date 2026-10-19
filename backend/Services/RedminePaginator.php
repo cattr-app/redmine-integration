@@ -13,7 +13,7 @@ final class RedminePaginator
      * Yield every item from a Redmine REST collection, respecting the 100-item
      * API cap. Process each page immediately instead of loading all rows.
      *
-     * @param callable(int, int): array $fetchPage
+     * @param callable(int, int): mixed $fetchPage
      * @return Generator<array>
      */
     public static function items(callable $fetchPage, string $collection): Generator
