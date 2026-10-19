@@ -13,9 +13,21 @@ class SynchronizeProjects extends Command
 
     public function handle(RedmineProjectService $redmineService): void
     {
-        $this->withProgressBar(
-            RedmineInstance::all(),
-            static fn($instance) => rescue(static fn() => $redmineService->synchronize($instance))
-        );
+        $failed = false;
+        $this->withProgressBar(RedmineInstance::all(), function (RedmineInstance $instance) use ($redmineService, &$failed): void {
+            try {
+                $redmineService->synchronize($instance);
+            } catch (\Throwable $exception) {
+                $failed = true;
+                report($exception);
+                $this->newLine();
+                $this->error("Redmine instance {$instance->id}: {$exception->getMessage()}");
+            }
+        });
+
+        if ($failed) {
+            $this->newLine();
+            throw new \RuntimeException('One or more Redmine instances failed to synchronize.');
+        }
     }
 }
