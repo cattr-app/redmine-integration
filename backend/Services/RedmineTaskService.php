@@ -2,16 +2,19 @@
 
 namespace Modules\RedmineIntegration\Services;
 
+use App\Models\CronTaskWorkers;
 use App\Models\Project;
 use App\Models\Task;
 use Exception;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Modules\RedmineIntegration\Entities\RedmineGroup;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedminePriority;
 use Modules\RedmineIntegration\Entities\RedmineProject;
 use Modules\RedmineIntegration\Entities\RedmineStatus;
 use Modules\RedmineIntegration\Entities\RedmineTask;
+use Modules\RedmineIntegration\Entities\RedmineTimeInterval;
 use Modules\RedmineIntegration\Entities\RedmineUser;
 use Redmine\Client\Client;
 
@@ -27,6 +30,10 @@ class RedmineTaskService
             'redmine_instance_id' => $redmineInstance->id,
             'redmine_issue_id' => $redmineIssueId,
         ])->first();
+
+        if ($existingRedmineTask && $existingRedmineTask->task?->trashed()) {
+            return;
+        }
 
         $redmineProject = RedmineProject::where([
             'redmine_instance_id' => $redmineInstance->id,
@@ -82,7 +89,7 @@ class RedmineTaskService
             if (isset($existingRedmineTask->task)) {
                 $existingRedmineTask->task->fill([
                     'task_name' => $data['subject'],
-                    'description' => $data['description'],
+                    'description' => $data['description'] ?? '',
                     'project_id' => $redmineProject->project_id,
                     'priority_id' => $redminePriority->priority_id,
                     'status_id' => $redmineStatus->status_id,
@@ -94,7 +101,7 @@ class RedmineTaskService
             } else {
                 $task = Task::create([
                     'task_name' => $data['subject'],
-                    'description' => $data['description'],
+                    'description' => $data['description'] ?? '',
                     'project_id' => $redmineProject->project_id,
                     'priority_id' => $redminePriority->priority_id,
                     'status_id' => $redmineStatus->status_id,
@@ -109,7 +116,7 @@ class RedmineTaskService
         } else {
             $task = Task::create([
                 'task_name' => $data['subject'],
-                'description' => $data['description'],
+                'description' => $data['description'] ?? '',
                 'project_id' => $redmineProject->project_id,
                 'priority_id' => $redminePriority->priority_id,
                 'status_id' => $redmineStatus->status_id,
@@ -160,6 +167,10 @@ class RedmineTaskService
             'redmine_issue_id' => $redmineIssueId,
         ])->first();
 
+        if ($existingRedmineTask && $existingRedmineTask->task?->trashed()) {
+            return;
+        }
+
         $redmineProject = RedmineProject::where([
             'redmine_instance_id' => $redmineInstance->id,
             'redmine_project_id' => $data['project']['id'],
@@ -175,10 +186,10 @@ class RedmineTaskService
             'redmine_priority_id' => $data['priority']['id'],
         ])->first();
 
-        if (isset($data['assignee'])) {
+        if (isset($data['assigned_to'])) {
             $redmineGroup = RedmineGroup::where([
                 'redmine_instance_id' => $redmineInstance->id,
-                'redmine_group_id' => $data['assignee']['id'],
+                'redmine_group_id' => $data['assigned_to']['id'],
             ])->first();
 
             if (isset($redmineGroup)) {
@@ -186,7 +197,7 @@ class RedmineTaskService
             } else {
                 $redmineUser = RedmineUser::where([
                     'redmine_instance_id' => $redmineInstance->id,
-                    'redmine_user_id' => $data['assignee']['id'],
+                    'redmine_user_id' => $data['assigned_to']['id'],
                 ])->first();
 
                 if (isset($redmineUser)) {
@@ -205,7 +216,7 @@ class RedmineTaskService
             if ($redmineInstance->sync_new_projects) {
                 $project = Project::create([
                     'name' => $data['project']['name'],
-                    'description' => $data['project']['description'],
+                    'description' => $data['project']['name'],
                     'source' => 'redmine',
                 ]);
             } else {
@@ -237,7 +248,7 @@ class RedmineTaskService
             if (isset($existingRedmineTask->task)) {
                 $existingRedmineTask->task->fill([
                     'task_name' => $data['subject'],
-                    'description' => $data['description'],
+                    'description' => $data['description'] ?? '',
                     'project_id' => $redmineProject->project_id,
                     'priority_id' => $redminePriority->priority_id,
                     'status_id' => $redmineStatus->status_id,
@@ -249,7 +260,7 @@ class RedmineTaskService
             } else {
                 $task = Task::create([
                     'task_name' => $data['subject'],
-                    'description' => $data['description'],
+                    'description' => $data['description'] ?? '',
                     'project_id' => $redmineProject->project_id,
                     'priority_id' => $redminePriority->priority_id,
                     'status_id' => $redmineStatus->status_id,
@@ -264,7 +275,7 @@ class RedmineTaskService
         } else {
             $task = Task::create([
                 'task_name' => $data['subject'],
-                'description' => $data['description'],
+                'description' => $data['description'] ?? '',
                 'project_id' => $redmineProject->project_id,
                 'priority_id' => $redminePriority->priority_id,
                 'status_id' => $redmineStatus->status_id,
@@ -279,6 +290,48 @@ class RedmineTaskService
                 'task_id' => $task->id,
             ]);
         }
+    }
+
+    /**
+     * Soft-delete the linked Cattr task without deleting historical time intervals.
+     * Retire pending Redmine uploads and perform the other Task::deleting cleanup.
+     */
+    public function deleteTaskFromWebhook(RedmineInstance $redmineInstance, int $redmineIssueId): void
+    {
+        DB::transaction(function () use ($redmineInstance, $redmineIssueId) {
+            $relation = RedmineTask::where([
+                'redmine_instance_id' => $redmineInstance->id,
+                'redmine_issue_id' => $redmineIssueId,
+            ])->first();
+
+            if (!$relation || !$relation->task_id) {
+                return;
+            }
+
+            $task = Task::withoutGlobalScopes()->whereKey($relation->task_id)->lockForUpdate()->first();
+            if (!$task) {
+                return;
+            }
+
+            // Only drop this instance's pending upload links, never the actual Cattr intervals.
+            RedmineTimeInterval::whereRedmineInstanceId($redmineInstance->id)
+                ->whereIn('time_interval_id', function ($query) use ($task) {
+                    $query->select('id')->from('time_intervals')->where('task_id', $task->id);
+                })->delete();
+
+            if ($task->trashed()) {
+                return;
+            }
+
+            // Match Task::deleting without invoking its destructive timeIntervals()->delete().
+            $task->parents()->detach();
+            $task->children()->detach();
+            CronTaskWorkers::whereTaskId($task->id)->delete();
+
+            Task::withoutGlobalScopes()->whereKey($task->id)
+                ->whereNull('deleted_at')
+                ->update(['deleted_at' => now()]);
+        });
     }
 
     public function updateRedmineTask(

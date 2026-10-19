@@ -56,6 +56,6 @@ class RedmineTask extends Model
 
     public function task(): BelongsTo
     {
-        return $this->belongsTo(Task::class, 'task_id')->withoutGlobalScope(TaskAccessScope::class);
+        return $this->belongsTo(Task::class, 'task_id')->withoutGlobalScope(TaskAccessScope::class)->withTrashed();
     }
 }

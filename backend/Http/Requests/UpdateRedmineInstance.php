@@ -21,6 +21,8 @@ class UpdateRedmineInstance extends FormRequest
             'task_sync_interval' => 'required|integer',
             'priority_sync_interval' => 'required|integer',
             'status_sync_interval' => 'required|integer',
+            'webhook_secret' => 'sometimes|nullable|string|min:16|max:255',
+            'clear_webhook_secret' => 'sometimes|boolean',
             'auth_method' => 'sometimes|required|string',
             'auth_login' => 'required_if:auth_method,basic|string',
             'auth_password' => 'required_if:auth_method,basic|string',

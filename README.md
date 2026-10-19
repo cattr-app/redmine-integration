@@ -8,7 +8,7 @@ For instance management, user authorization, and interface setup, see the [front
 
 This module runs inside Cattr, using its models, services, database, and scheduler. It has no standalone application or build. The backend manifest specifies a minimum core version of `4.0`; choose a module release compatible with your server version.
 
-Use the PHP and Composer versions required by your Cattr server. PHP SimpleXML is required; Composer installs `kbsali/redmine-api`. Configure a reachable Redmine instance with REST API access. Webhook integration also requires the corresponding Redmine plugin and matching request signature configuration.
+Use the PHP and Composer versions required by your Cattr server. PHP SimpleXML is required; Composer installs `kbsali/redmine-api`. Configure a reachable Redmine instance with REST API access. Redmine 7.0.2 has built-in webhooks. Webhook mode requires an instance-specific secret (at least 16 characters); install no extra Redmine webhook plugin.
 
 ## Installation from a Published Composer Package
 
@@ -50,13 +50,7 @@ php artisan migrate
 
 Restart the Cattr processes, including Octane and the scheduler, after configuration changes. Install and register the [frontend module](frontend/README.md), then configure Redmine instances, synchronization intervals, and mappings in the interface. Users authorize their Redmine accounts through their settings.
 
-For signed webhook requests, generate the shared key and configure the same value in the Redmine plugin:
-
-```bash
-php artisan redmine:plugin:signature-generate
-```
-
-The command writes `REQUEST_SIGNATURE` to the server environment and prints the key. Keep that output private. The webhook endpoint is `/api/integration/redmine/{instance}/webhook`, where `{instance}` identifies the configured Redmine instance.
+For Redmine 7 native webhooks, configure the same secret (at least 16 characters) in both the Redmine webhook and the corresponding Cattr instance. Secrets are encrypted at rest and are never included in the instance API response; updating with an empty field keeps the existing secret. Configure these Redmine events: `issue.created`, `issue.updated`, and `issue.deleted`. The endpoint is `/api/integration/redmine/{instance}/webhook`, where `{instance}` is the Cattr Redmine instance ID. Redmine signs the raw JSON body with HMAC-SHA256 and sends `X-Redmine-Signature-256: sha256=<hex digest>`. The endpoint rejects invalid or missing signatures with HTTP 403. For security, legacy unsigned webhook deliveries are no longer accepted; migrate any existing legacy webhook configuration to Redmine 7 built-in webhooks before deploying. Deleting an issue soft-deletes its linked Cattr task by setting `tasks.deleted_at`; it retains task mapping and recorded time history. Repeat deletion events are idempotent.
 
 Use Cattr's existing Laravel scheduler. If none is configured, run it once per minute:
 
@@ -76,7 +70,7 @@ php artisan list redmine
 php artisan schedule:list
 ```
 
-Check instance connectivity and mappings in the interface, then verify synchronization against a test Redmine instance. The existing test in `backend/Tests/GeneratesRequestSignatureTest.php` requires Cattr's application test harness; this repository does not provide a standalone PHPUnit setup.
+Check instance connectivity and mappings in the interface, then verify synchronization against a test Redmine instance. The native webhook test in `backend/Tests/NativeRedmineWebhookTest.php` requires Cattr's application test harness; this repository does not provide a standalone PHPUnit setup.
 
 ## Repository and Publishing
 
