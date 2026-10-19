@@ -3,10 +3,14 @@
 namespace Modules\RedmineIntegration\Tests;
 
 use App\Models\Task;
+use App\Models\TimeInterval;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedmineTask;
+use Modules\RedmineIntegration\Entities\RedmineTimeInterval;
 use Modules\RedmineIntegration\Services\RedmineTaskService;
+use Modules\RedmineIntegration\Services\RedmineTimeService;
 use Tests\TestCase;
 
 class NativeRedmineWebhookTest extends TestCase
@@ -94,5 +98,74 @@ class NativeRedmineWebhookTest extends TestCase
 
         $this->assertSame(1, RedmineTask::where('redmine_instance_id', $instance->id)->count());
         $this->assertNotNull(Task::withTrashed()->findOrFail($task->id)->deleted_at);
+    }
+
+    public function test_issue_deletion_cleans_links_and_upload_queue_but_preserves_intervals(): void
+    {
+        $instance = $this->instance();
+        $task = Task::factory()->create();
+        $otherTask = Task::factory()->create();
+        RedmineTask::create([
+            'redmine_instance_id' => $instance->id,
+            'redmine_issue_id' => 123,
+            'task_id' => $task->id,
+        ]);
+
+        $interval = TimeInterval::factory()->create([
+            'task_id' => $task->id,
+            'user_id' => $task->assigned_by,
+        ]);
+        RedmineTimeInterval::create([
+            'redmine_instance_id' => $instance->id,
+            'time_interval_id' => $interval->id,
+        ]);
+
+        DB::table('tasks_relations')->insert([
+            ['parent_id' => $otherTask->id, 'child_id' => $task->id, 'label' => 'blocks', 'weight' => 1],
+            ['parent_id' => $task->id, 'child_id' => $otherTask->id, 'label' => 'blocks', 'weight' => 1],
+        ]);
+        DB::table('cron_task_workers')->insert([
+            'user_id' => $task->assigned_by,
+            'task_id' => $task->id,
+            'duration' => 300,
+        ]);
+
+        $body = json_encode(['type' => 'issue.deleted', 'data' => ['issue' => ['id' => 123]]]);
+        $this->signedRequest($instance, $body)->assertStatus(204);
+        $this->signedRequest($instance, $body)->assertStatus(204);
+
+        $this->assertNotNull(Task::withTrashed()->findOrFail($task->id)->deleted_at);
+        $this->assertDatabaseHas('time_intervals', ['id' => $interval->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('redmine_tasks', ['redmine_instance_id' => $instance->id, 'task_id' => $task->id]);
+        $this->assertDatabaseMissing('redmine_time_intervals', ['time_interval_id' => $interval->id]);
+        $this->assertDatabaseMissing('cron_task_workers', ['task_id' => $task->id]);
+        $this->assertSame(0, DB::table('tasks_relations')
+            ->where('parent_id', $task->id)->orWhere('child_id', $task->id)->count());
+    }
+
+    public function test_time_synchronization_retires_uploads_queued_after_task_deletion(): void
+    {
+        $instance = $this->instance();
+        $task = Task::factory()->create();
+        RedmineTask::create([
+            'redmine_instance_id' => $instance->id,
+            'redmine_issue_id' => 123,
+            'task_id' => $task->id,
+        ]);
+        app(RedmineTaskService::class)->deleteTaskFromWebhook($instance, 123);
+
+        $interval = TimeInterval::factory()->create([
+            'task_id' => $task->id,
+            'user_id' => $task->assigned_by,
+        ]);
+        RedmineTimeInterval::create([
+            'redmine_instance_id' => $instance->id,
+            'time_interval_id' => $interval->id,
+        ]);
+
+        app(RedmineTimeService::class)->synchronize($instance);
+
+        $this->assertDatabaseMissing('redmine_time_intervals', ['time_interval_id' => $interval->id]);
+        $this->assertDatabaseHas('time_intervals', ['id' => $interval->id, 'deleted_at' => null]);
     }
 }

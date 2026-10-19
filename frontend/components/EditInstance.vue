@@ -96,6 +96,12 @@
             <div class="col-18">
                 <at-input v-model="webhookSecret" type="password" :placeholder="$t('instance.webhook_secret_placeholder')" />
                 <p>{{ instance.webhook_secret_configured ? $t('instance.webhook_secret_saved') : $t('instance.webhook_secret_hint') }}</p>
+            </div>
+        </div>
+
+        <div v-show="instance.sync_type === 'cron' && instance.webhook_secret_configured" class="row">
+            <div class="col-6"></div>
+            <div class="col-18">
                 <label>
                     <input v-model="clearWebhookSecret" type="checkbox" />
                     {{ $t('instance.webhook_secret_clear') }}
@@ -255,8 +261,8 @@
 
                 const instanceData = { ...this.instance };
                 delete instanceData.webhook_secret_configured;
-                if (this.webhookSecret) instanceData.webhook_secret = this.webhookSecret;
-                if (this.clearWebhookSecret) instanceData.clear_webhook_secret = true;
+                if (this.instance.sync_type === 'webhook' && this.webhookSecret) instanceData.webhook_secret = this.webhookSecret;
+                if (this.instance.sync_type === 'cron' && this.clearWebhookSecret) instanceData.clear_webhook_secret = true;
                 try {
                     await this.service.update(id, instanceData);
                     await this.service.bulkUpdatePriority(id, {
@@ -267,6 +273,7 @@
                     });
                 } catch (error) {
                     this.$NotifyError(error);
+                    return;
                 }
 
                 await this.service.bulkUpdateStatus(id, {

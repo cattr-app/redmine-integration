@@ -33,7 +33,9 @@ class RedmineTimeService
             $task = RedmineTask::whereRedmineInstanceId($redmineInstance->id)
                 ->where('task_id', '=', $relation->timeInterval->task_id)
                 ->first();
-            if (!isset($task)) {
+            // Retire uploads queued after an issue was deleted (or after its Cattr task
+            // was soft-deleted independently). The RedmineTask mapping is kept.
+            if (!isset($task) || !$task->task || $task->task->trashed()) {
                 $relation->delete();
                 continue;
             }
