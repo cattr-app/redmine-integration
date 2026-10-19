@@ -3,75 +3,73 @@
 namespace Modules\RedmineIntegration\Services;
 
 use App\Models\Project;
-use Exception;
+use Illuminate\Support\Facades\DB;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedmineProject;
 use Redmine\Client\Client;
-use RuntimeException;
 
 class RedmineProjectService
 {
+    /**
+     * Create or refresh a project mapping without overwriting manual unlinks
+     * or links to deleted projects. Lock existing records during linking.
+     */
     protected function createRedmineProject(
         int $redmineInstanceId,
         int $redmineProjectId,
         string $name,
         bool $createInternalProjects
-    ) {
-        $existingRedmineProject = RedmineProject::where([
-            'redmine_instance_id' => $redmineInstanceId,
-            'redmine_project_id' => $redmineProjectId,
-        ])->first();
-
-        if (isset($existingRedmineProject)) {
-            // Do not replace mappings to deleted or missing Cattr projects.
-            if ($createInternalProjects && $existingRedmineProject->project_id === null) {
-                $project = Project::create([
-                    'name' => $name,
-                    'description' => $name,
-                    'source' => 'redmine',
-                ]);
-
-                $existingRedmineProject->project_id = $project->id;
-            }
-
-            $existingRedmineProject->name = $name;
-            $existingRedmineProject->save();
-        } else {
-            if ($createInternalProjects) {
-                $project = Project::create([
-                    'name' => $name,
-                    'description' => $name,
-                    'source' => 'redmine',
-                ]);
-            } else {
-                $project = null;
-            }
-
-            RedmineProject::create([
-                'redmine_project_id' => $redmineProjectId,
-                'name' => $name,
+    ): void {
+        DB::transaction(function () use ($redmineInstanceId, $redmineProjectId, $name, $createInternalProjects): void {
+            $mapping = RedmineProject::where([
                 'redmine_instance_id' => $redmineInstanceId,
-                'project_id' => isset($project) ? $project->id : null,
-            ]);
-        }
+                'redmine_project_id' => $redmineProjectId,
+            ])->lockForUpdate()->first();
+
+            if (!$mapping) {
+                // Serialize discovery of a new mapping against concurrent webhooks.
+                // Both code paths acquire the instance row before mapping lookup.
+                $instance = RedmineInstance::whereKey($redmineInstanceId)->lockForUpdate()->firstOrFail();
+                $mapping = RedmineProject::where([
+                    'redmine_instance_id' => $redmineInstanceId,
+                    'redmine_project_id' => $redmineProjectId,
+                ])->lockForUpdate()->first();
+                if (!$mapping) {
+                    $mapping = new RedmineProject([
+                        'redmine_instance_id' => $redmineInstanceId,
+                        'redmine_project_id' => $redmineProjectId,
+                        'manual_unlinked' => false,
+                    ]);
+                }
+            }
+
+            $mapping->name = $name;
+            if ($createInternalProjects && $mapping->project_id === null && $mapping->manual_unlinked === false) {
+                $project = Project::create([
+                    'name' => $name,
+                    'description' => $name,
+                    'source' => 'redmine',
+                ]);
+                $mapping->project_id = $project->id;
+            }
+            $mapping->save();
+        });
     }
 
-    public function synchronize(RedmineInstance $redmineInstance, bool $createInternalProjects = true)
+    /** Synchronize all project pages and honor cron's automatic import behavior. */
+    public function synchronize(RedmineInstance $redmineInstance, bool $createInternalProjects = true): void
     {
         $client = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $redmineInstance->api_key]);
-
-        // Explicit callers may disable creation (e.g. initial instance registration).
-        // Otherwise, honor the instance setting regardless of sync mode.
-        $createInternalProjects = $createInternalProjects && (bool) $redmineInstance->sync_new_projects;
+        $createInternalProjects = $createInternalProjects
+            && ($redmineInstance->sync_type === 'cron' || (bool) $redmineInstance->sync_new_projects);
 
         foreach (RedminePaginator::items(
-            static fn (int $offset, int $limit): array => $client->getApi('project')->all([
+            static fn (int $offset, int $limit) => $client->getApi('project')->all([
                 'offset' => $offset,
                 'limit' => $limit,
             ]),
             'projects'
         ) as $project) {
-
             $this->createRedmineProject(
                 $redmineInstance->id,
                 $project['id'],
