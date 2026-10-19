@@ -30,6 +30,17 @@ class RedminePaginatorTest extends TestCase
         $this->assertSame([[0, 100], [100, 100], [200, 100]], $requests);
     }
 
+    public function testRejectsNonArrayApiResponse(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Invalid Redmine projects page response');
+
+        iterator_to_array(RedminePaginator::items(
+            static fn (int $offset, int $limit) => false,
+            'projects'
+        ));
+    }
+
     public function testEmptyCollection(): void
     {
         $items = iterator_to_array(RedminePaginator::items(
