@@ -59,22 +59,18 @@ class RedmineProjectService
     public function synchronize(RedmineInstance $redmineInstance, bool $createInternalProjects = true)
     {
         $client = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $redmineInstance->api_key]);
-        $response = $client->getApi('project')->all(['limit' => 1]);
-        if (empty($response['total_count'])) {
-            return;
-        }
-
-        $count = $response['total_count'];
-        $response = $client->getApi('project')->all(['limit' => $count]);
-        if (!is_array($response) || !isset($response['projects'])) {
-            throw new RuntimeException('Invalid credentials or Redmine not available. Please contact your administrator');
-        }
 
         // Explicit callers may disable creation (e.g. initial instance registration).
         // Otherwise, honor the instance setting regardless of sync mode.
         $createInternalProjects = $createInternalProjects && (bool) $redmineInstance->sync_new_projects;
 
-        foreach ($response['projects'] as $project) {
+        foreach (RedminePaginator::items(
+            static fn (int $offset, int $limit): array => $client->getApi('project')->all([
+                'offset' => $offset,
+                'limit' => $limit,
+            ]),
+            'projects'
+        ) as $project) {
 
             $this->createRedmineProject(
                 $redmineInstance->id,
