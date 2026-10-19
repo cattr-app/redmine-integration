@@ -23,7 +23,8 @@ class RedmineProjectService
         ])->first();
 
         if (isset($existingRedmineProject)) {
-            if ($createInternalProjects && !isset($existingRedmineProject->project)) {
+            // Do not replace mappings to deleted or missing Cattr projects.
+            if ($createInternalProjects && $existingRedmineProject->project_id === null) {
                 $project = Project::create([
                     'name' => $name,
                     'description' => $name,
@@ -69,8 +70,11 @@ class RedmineProjectService
             throw new RuntimeException('Invalid credentials or Redmine not available. Please contact your administrator');
         }
 
+        // Explicit callers may disable creation (e.g. initial instance registration).
+        // Otherwise, honor the instance setting regardless of sync mode.
+        $createInternalProjects = $createInternalProjects && (bool) $redmineInstance->sync_new_projects;
+
         foreach ($response['projects'] as $project) {
-            $createInternalProjects = $createInternalProjects && $redmineInstance->sync_type === 'cron';
 
             $this->createRedmineProject(
                 $redmineInstance->id,
