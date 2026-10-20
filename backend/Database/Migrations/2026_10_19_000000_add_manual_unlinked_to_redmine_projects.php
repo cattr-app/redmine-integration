@@ -9,7 +9,8 @@ class AddManualUnlinkedToRedmineProjects extends Migration
     public function up(): void
     {
         Schema::table('redmine_projects', function (Blueprint $table): void {
-            // NULL marks pre-migration mappings whose intent cannot be inferred.
+            // Legacy NULL mappings are linkable by cron, but kept unlinked in webhook mode.
+            // Explicit admin unlinks use true and are never auto-linked.
             $table->boolean('manual_unlinked')->nullable()->default(null);
         });
     }
