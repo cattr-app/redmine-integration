@@ -47,6 +47,76 @@ class NativeRedmineWebhookTest extends TestCase
         );
     }
 
+
+    private function legacyRequest(RedmineInstance $instance, string $body, ?string $signature = 'legacy-test-token')
+    {
+        $headers = ['CONTENT_TYPE' => 'application/json'];
+        if ($signature !== null) {
+            $headers['HTTP_X_REDMINE_SIGNATURE'] = $signature;
+        }
+
+        return $this->call(
+            'POST',
+            "/api/integration/redmine/{$instance->id}/webhook",
+            [],
+            [],
+            [],
+            $headers,
+            $body
+        );
+    }
+
+    public function test_legacy_plugin_payload_is_accepted_for_existing_instance(): void
+    {
+        config()->set('redmineintegration.request.signature', 'legacy-test-token');
+        $instance = $this->instance('');
+        $body = json_encode(['payload' => ['issue' => [
+            'id' => 123,
+            'project' => ['id' => 4, 'name' => 'Legacy project'],
+            'status' => ['id' => 1],
+            'priority' => ['id' => 2],
+            'subject' => 'Legacy issue',
+            'assignee' => ['id' => 10],
+        ]]], JSON_THROW_ON_ERROR);
+
+        // No mapped project exists, so a valid legacy update is accepted without creating a task.
+        $this->legacyRequest($instance, $body)->assertStatus(204);
+    }
+
+    public function test_legacy_signature_rejects_missing_invalid_and_default_keys(): void
+    {
+        $instance = $this->instance('');
+        $body = json_encode(['payload' => ['issue' => ['id' => 123]]], JSON_THROW_ON_ERROR);
+        config()->set('redmineintegration.request.signature', 'legacy-test-token');
+
+        $this->legacyRequest($instance, $body, null)->assertStatus(403);
+        $this->legacyRequest($instance, $body, 'invalid')->assertStatus(403);
+        config()->set('redmineintegration.request.signature', 'DEFAULT');
+        $this->legacyRequest($instance, $body, 'DEFAULT')->assertStatus(403);
+    }
+
+    public function test_configured_native_secret_disables_legacy_authentication(): void
+    {
+        config()->set('redmineintegration.request.signature', 'legacy-test-token');
+        $instance = $this->instance();
+        $body = json_encode(['payload' => ['issue' => ['id' => 123]]], JSON_THROW_ON_ERROR);
+
+        $this->legacyRequest($instance, $body)->assertStatus(403);
+        // A malformed native signature must not fall back to an otherwise valid legacy header.
+        $this->call('POST', "/api/integration/redmine/{$instance->id}/webhook", [], [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_X_REDMINE_SIGNATURE_256' => 'sha256=invalid',
+            'HTTP_X_REDMINE_SIGNATURE' => 'legacy-test-token',
+        ], $body)->assertStatus(403);
+    }
+
+    public function test_legacy_payload_must_contain_issue_data(): void
+    {
+        config()->set('redmineintegration.request.signature', 'legacy-test-token');
+        $instance = $this->instance('');
+        $this->legacyRequest($instance, '{"payload":{}}')->assertStatus(422);
+    }
+
     public function test_signature_required_and_validated(): void
     {
         $instance = $this->instance();
