@@ -18,9 +18,10 @@ class RedmineProjectService
         int $redmineInstanceId,
         int $redmineProjectId,
         string $name,
-        bool $createInternalProjects
+        bool $createInternalProjects,
+        string $syncType
     ): void {
-        DB::transaction(function () use ($redmineInstanceId, $redmineProjectId, $name, $createInternalProjects): void {
+        DB::transaction(function () use ($redmineInstanceId, $redmineProjectId, $name, $createInternalProjects, $syncType): void {
             // Lock in the same order as webhook synchronization to avoid deadlocks.
             RedmineInstance::whereKey($redmineInstanceId)->lockForUpdate()->firstOrFail();
             $mapping = RedmineProject::where([
@@ -37,7 +38,12 @@ class RedmineProjectService
             }
 
             $mapping->name = $name;
-            if ($createInternalProjects && $mapping->project_id === null && $mapping->manual_unlinked === false) {
+            if (RedmineProjectLinkPolicy::shouldAutoLink(
+                $mapping->project_id,
+                $mapping->manual_unlinked,
+                $syncType,
+                $createInternalProjects
+            )) {
                 $project = Project::create([
                     'name' => $name,
                     'description' => $name,
@@ -67,7 +73,8 @@ class RedmineProjectService
                 $redmineInstance->id,
                 $project['id'],
                 $project['name'],
-                $createInternalProjects
+                $createInternalProjects,
+                $redmineInstance->sync_type
             );
         }
     }
