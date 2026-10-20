@@ -47,12 +47,16 @@
     "from_redmine": "Из Redmine",
     "to_cattr": "В Cattr",
     "url": "URL",
-    "redmine_plugin_required": "Чтобы использовать webhook-синхронизацию требуется плагин для Redmine",
     "actions": "Действия",
     "authorize": "Авторизоваться",
     "reauthorize": "Переавторизоваться",
     "create": "Создать",
-    "edit": "Редактировать"
+    "edit": "Редактировать",
+    "webhook_secret": "Секрет вебхука",
+    "webhook_secret_hint": "Минимум 16 символов. Используйте тот же секрет в настройках вебхука Redmine 7.",
+    "webhook_secret_saved": "Секрет сохранён. Оставьте поле пустым, чтобы не менять его.",
+    "webhook_secret_placeholder": "Новый секрет (необязательно)",
+    "webhook_secret_clear": "Очистить сохранённый секрет (только для режима CRON)"
   },
   "project_select": {
     "create_new": "Создать новый",

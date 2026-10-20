@@ -23,13 +23,11 @@
             </div>
         </div>
 
-        <div v-show="instance.sync_type == 'webhook'" class="row">
-            <div class="col-24">
-                <p>
-                    <a href="https://github.com/suer/redmine_webhook" target="_blank">
-                        {{ $t('instance.redmine_plugin_required') }}
-                    </a>
-                </p>
+        <div v-show="instance.sync_type === 'webhook'" class="row">
+            <div class="col-6"><p class="label">{{ $t('instance.webhook_secret') }}</p></div>
+            <div class="col-18">
+                <at-input v-model="instance.webhook_secret" type="password" :placeholder="$t('instance.webhook_secret')" />
+                <p>{{ $t('instance.webhook_secret_hint') }}</p>
             </div>
         </div>
 
@@ -54,6 +52,7 @@
                 instance: {
                     url: '',
                     sync_type: 'cron',
+                    webhook_secret: '',
                 },
                 showAuthPopup: false,
             };
@@ -69,6 +68,7 @@
                 const data = {
                     url: this.instance.url,
                     sync_type: this.instance.sync_type,
+                    webhook_secret: this.instance.sync_type === 'webhook' ? this.instance.webhook_secret : null,
                     sync_new_projects: false,
                     project_sync_interval: 5,
                     task_sync_interval: 5,
@@ -77,13 +77,19 @@
                     ...authData,
                 };
 
-                const result = await this.service.create(data);
+                let result;
+                try {
+                    result = await this.service.create(data);
+                } catch (error) {
+                    this.$NotifyError(error);
+                    return;
+                }
+
+                this.showAuthPopup = false;
                 this.$router.push({
                     name: 'AmazingCat_RedmineIntegration.company.redmine.edit',
                     params: { id: result.id },
                 });
-
-                this.showAuthPopup = false;
             },
         },
     };

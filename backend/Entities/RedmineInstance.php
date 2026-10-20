@@ -48,6 +48,7 @@ class RedmineInstance extends Model
         'task_sync_interval',
         'priority_sync_interval',
         'status_sync_interval',
+        'webhook_secret',
     ];
 
     /**
@@ -55,7 +56,10 @@ class RedmineInstance extends Model
      */
     protected $hidden = [
         'api_key',
+        'webhook_secret',
     ];
+
+    protected $appends = ['webhook_secret_configured'];
 
     /**
      * @var array
@@ -66,5 +70,10 @@ class RedmineInstance extends Model
         'task_sync_interval' => 'int',
         'priority_sync_interval' => 'int',
         'status_sync_interval' => 'int',
+        'webhook_secret' => 'encrypted',
     ];
+    public function getWebhookSecretConfiguredAttribute(): bool
+    {
+        return !empty($this->attributes['webhook_secret'] ?? null);
+    }
 }

@@ -56,4 +56,6 @@ Route::group(['middleware' => 'auth:sanctum'], static function (Router $router) 
            ->name('redmine-users.check-auth');
 });
 
-Route::any('/{instance}/webhook', [RedmineWebhookController::class, 'webhook'])->name('redmine-webhook');
+Route::post('/{instance}/webhook', [RedmineWebhookController::class, 'webhook'])
+    ->middleware('redmineintegration.signature')
+    ->name('redmine-webhook');

@@ -21,6 +21,7 @@ class CreateRedmineInstance extends FormRequest
             'task_sync_interval' => 'required|integer',
             'priority_sync_interval' => 'required|integer',
             'status_sync_interval' => 'required|integer',
+            'webhook_secret' => 'required_if:sync_type,webhook|nullable|string|min:16|max:255',
             'auth_method' => 'required|string',
             'auth_login' => 'required_if:auth_method,basic|string',
             'auth_password' => 'required_if:auth_method,basic|string',
