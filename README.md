@@ -8,7 +8,7 @@ For instance management, user authorization, and interface setup, see the [front
 
 This module runs inside Cattr, using its models, services, database, and scheduler. It has no standalone application or build. The backend manifest specifies a minimum core version of `4.0`; choose a module release compatible with your server version.
 
-Use the PHP and Composer versions required by your Cattr server. PHP SimpleXML is required; Composer installs `kbsali/redmine-api`. Configure a reachable Redmine instance with REST API access. Redmine 7.0.2 has built-in webhooks. Webhook mode requires an instance-specific secret (at least 16 characters); install no extra Redmine webhook plugin.
+Use the PHP and Composer versions required by your Cattr server. PHP SimpleXML is required; Composer installs `kbsali/redmine-api`. Configure a reachable Redmine instance with REST API access. Redmine 7.0.2 has built-in webhooks. Native webhook mode requires an instance-specific secret (at least 16 characters). Existing older Redmine installations may continue using their installed webhook plugin and legacy shared signature.
 
 ## Installation from a Published Composer Package
 
@@ -51,6 +51,19 @@ php artisan migrate
 Restart the Cattr processes, including Octane and the scheduler, after configuration changes. Install and register the [frontend module](frontend/README.md), then configure Redmine instances, synchronization intervals, and mappings in the interface. Users authorize their Redmine accounts through their settings.
 
 For Redmine 7 native webhooks, configure the same secret (at least 16 characters) in both the Redmine webhook and the corresponding Cattr instance. Secrets are encrypted at rest and are never included in the instance API response; updating with an empty field keeps the existing secret. Configure these Redmine events: `issue.created`, `issue.updated`, and `issue.deleted`. The endpoint is `/api/integration/redmine/{instance}/webhook`, where `{instance}` is the Cattr Redmine instance ID. Redmine signs the raw JSON body with HMAC-SHA256 and sends `X-Redmine-Signature-256: sha256=<hex digest>`. The endpoint rejects invalid or missing signatures with HTTP 403. For security, legacy unsigned webhook deliveries are no longer accepted; migrate any existing legacy webhook configuration to Redmine 7 built-in webhooks before deploying. Deleting an issue soft-deletes its linked Cattr task by setting `tasks.deleted_at`; it retains task mapping and recorded time history. Repeat deletion events are idempotent.
+
+### Backward compatibility with legacy Redmine webhook plugins
+
+The existing endpoint `/api/integration/redmine/{instance}/webhook` accepts **both** formats without changing the sender URL:
+
+- **Native Redmine 7:** `X-Redmine-Signature-256: sha256=<HMAC-SHA256>`, computed over the exact request body using the encrypted per-instance `webhook_secret`. Events use `type` and `data.issue`; creation, updates and deletion are supported.
+- **Legacy Redmine plugin:** `X-REDMINE-SIGNATURE: <shared static token>`, using `REQUEST_SIGNATURE` from the Cattr server environment and the `payload.issue` envelope. Older `assignee` fields are mapped to `assigned_to`; as before, legacy events create or update tasks, not delete them.
+
+To keep existing deployments working, retain their old `REQUEST_SIGNATURE` and leave `webhook_secret` unset for those Redmine instances. The old token is shared across legacy instances, whereas the native HMAC secret is configured per instance. `REQUEST_SIGNATURE` must be a nonempty, non-default secret; `DEFAULT` is always rejected.
+
+For **new native Redmine 7 installations**, configure the per-instance HMAC secret in the Cattr UI and in Redmine. When an instance has a native secret, the legacy shared token is **not** accepted for that instance. A request bearing a native signature is never retried with legacy authentication if HMAC verification fails. This maintains native authentication without downgrade, and lets older instances keep using their existing URLs and settings. To migrate an old instance to native Redmine webhooks, save its new per-instance secret and switch the sender in Redmine; the old legacy token will then stop working for that instance.
+
+Legacy static-token authentication is provided only for backward compatibility. Protect the endpoint with HTTPS, rotate exposed tokens, and prefer native HMAC authentication for new deployments.
 
 Use Cattr's existing Laravel scheduler. If none is configured, run it once per minute:
 
