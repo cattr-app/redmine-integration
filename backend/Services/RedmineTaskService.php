@@ -224,9 +224,12 @@ class RedmineTaskService
             }
 
             $mapping->name = $data['project']['name'];
-            if ($mapping->project_id === null
-                && $mapping->manual_unlinked === false
-                && $redmineInstance->sync_new_projects) {
+            if (RedmineProjectLinkPolicy::shouldAutoLink(
+                $mapping->project_id,
+                $mapping->manual_unlinked,
+                $redmineInstance->sync_type,
+                (bool) $redmineInstance->sync_new_projects
+            )) {
                 $project = Project::create([
                     'name' => $data['project']['name'],
                     'description' => $data['project']['description'] ?? $data['project']['name'],
