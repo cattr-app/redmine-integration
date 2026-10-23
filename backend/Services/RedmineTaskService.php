@@ -40,6 +40,12 @@ class RedmineTaskService
             'redmine_project_id' => $data['project']['id'],
         ])->first();
 
+        // An external project may intentionally have no Cattr counterpart.
+        // Deleted Cattr projects are also hidden by the relation's SoftDeletes scope.
+        if (!$redmineProject || !$redmineProject->project) {
+            return;
+        }
+
         $redmineStatus = RedmineStatus::where([
             'redmine_instance_id' => $redmineInstance->id,
             'redmine_status_id' => $data['status']['id'],
@@ -137,18 +143,15 @@ class RedmineTaskService
     public function synchronize(RedmineInstance $redmineInstance): void
     {
         $client = app(Client::class, ['url' => $redmineInstance->url, 'apikeyOrUsername' => $redmineInstance->api_key]);
-        $response = $client->getApi('issue')->all(['status_id' => '*', 'limit' => 1]);
-        if (empty($response['total_count'])) {
-            return;
-        }
 
-        $count = $response['total_count'];
-        $response = $client->getApi('issue')->all(['status_id' => '*', 'limit' => $count]);
-        if (!is_array($response) || !isset($response['issues'])) {
-            throw new Exception('Invalid credentials or Redmine not available. Please contact your administrator');
-        }
-
-        foreach ($response['issues'] as $issue) {
+        foreach (RedminePaginator::items(
+            static fn (int $offset, int $limit) => $client->getApi('issue')->all([
+                'status_id' => '*',
+                'offset' => $offset,
+                'limit' => $limit,
+            ]),
+            'issues'
+        ) as $issue) {
             $this->createRedmineTask($redmineInstance, $issue['id'], Arr::only($issue, [
                 'subject',
                 'description',
@@ -212,26 +215,46 @@ class RedmineTaskService
 
         $userIds = collect($redmineUsers)->pluck('user_id');
 
-        if (!isset($redmineProject)) {
-            if ($redmineInstance->sync_new_projects) {
-                $project = Project::create([
-                    'name' => $data['project']['name'],
-                    'description' => $data['project']['name'],
-                    'source' => 'redmine',
+        // Serialize project discovery and linking for concurrent webhooks and cron.
+        // Newly registered mappings are eligible; manually cleared ones are not.
+        $redmineProject = DB::transaction(function () use ($redmineInstance, $data): RedmineProject {
+            RedmineInstance::whereKey($redmineInstance->id)->lockForUpdate()->firstOrFail();
+
+            $mapping = RedmineProject::where([
+                'redmine_instance_id' => $redmineInstance->id,
+                'redmine_project_id' => $data['project']['id'],
+            ])->lockForUpdate()->first();
+
+            if (!$mapping) {
+                $mapping = new RedmineProject([
+                    'redmine_project_id' => $data['project']['id'],
+                    'redmine_instance_id' => $redmineInstance->id,
+                    'manual_unlinked' => false,
                 ]);
-            } else {
-                $project = null;
             }
 
-            $redmineProject = RedmineProject::create([
-                'redmine_project_id' => $data['project']['id'],
-                'name' => $data['project']['name'],
-                'redmine_instance_id' => $redmineInstance->id,
-                'project_id' => isset($project) ? $project->id : null,
-            ]);
-        }
+            $mapping->name = $data['project']['name'];
+            if (RedmineProjectLinkPolicy::shouldAutoLink(
+                $mapping->project_id,
+                $mapping->manual_unlinked,
+                $redmineInstance->sync_type,
+                (bool) $redmineInstance->sync_new_projects
+            )) {
+                $project = Project::create([
+                    'name' => $data['project']['name'],
+                    'description' => $data['project']['description'] ?? $data['project']['name'],
+                    'source' => 'redmine',
+                ]);
+                $mapping->project_id = $project->id;
+            }
 
-        if (!isset($redmineProject->project_id)) {
+            $mapping->save();
+
+            return $mapping;
+        });
+
+        // Do not recreate a deliberately deleted Cattr project.
+        if (!$redmineProject->project) {
             return;
         }
 
