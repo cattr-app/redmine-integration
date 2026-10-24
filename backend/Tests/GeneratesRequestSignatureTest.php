@@ -19,7 +19,7 @@ class GeneratesRequestSignatureTest extends TestCase
         $env = $this->app->environmentFilePath();
 
         $command = $this->getMockBuilder(GenerateSignature::class)
-            ->setMethods([
+            ->onlyMethods([
                 'generateRandomKey',
                 'getEnvFilePath'
             ])

@@ -17,7 +17,7 @@ class NativeRedmineWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function instance(string $secret = 'abcdefghijklmnop'): RedmineInstance
+    private function makeInstance(string $secret = 'abcdefghijklmnop'): RedmineInstance
     {
         return RedmineInstance::create([
             'url' => 'https://redmine.example.org',
@@ -49,7 +49,7 @@ class NativeRedmineWebhookTest extends TestCase
 
     public function test_signature_required_and_validated(): void
     {
-        $instance = $this->instance();
+        $instance = $this->makeInstance();
         $body = json_encode(['type' => 'issue.deleted', 'data' => ['issue' => ['id' => 123]]], JSON_THROW_ON_ERROR);
 
         $this->call(
@@ -67,7 +67,7 @@ class NativeRedmineWebhookTest extends TestCase
 
     public function test_empty_secret_is_rejected_even_with_a_matching_signature(): void
     {
-        $instance = $this->instance('');
+        $instance = $this->makeInstance('');
         $body = json_encode(['type' => 'issue.deleted', 'data' => ['issue' => ['id' => 1]]], JSON_THROW_ON_ERROR);
 
         $this->signedRequest($instance, $body, 'sha256=' . hash_hmac('sha256', $body, ''))
@@ -76,7 +76,7 @@ class NativeRedmineWebhookTest extends TestCase
 
     public function test_configured_flag_does_not_decrypt_broken_ciphertext(): void
     {
-        $instance = $this->instance();
+        $instance = $this->makeInstance();
         $instance->setRawAttributes(array_merge($instance->getAttributes(), [
             'webhook_secret' => 'invalid-encrypted-value',
         ]));
@@ -88,7 +88,7 @@ class NativeRedmineWebhookTest extends TestCase
 
     public function test_issue_deleted_soft_deletes_linked_task_and_is_idempotent(): void
     {
-        $instance = $this->instance();
+        $instance = $this->makeInstance();
         $task = Task::factory()->create();
         RedmineTask::create([
             'redmine_instance_id' => $instance->id,
@@ -110,7 +110,7 @@ class NativeRedmineWebhookTest extends TestCase
 
     public function test_deleted_task_is_not_recreated_by_a_late_update(): void
     {
-        $instance = $this->instance();
+        $instance = $this->makeInstance();
         $task = Task::factory()->create();
         RedmineTask::create([
             'redmine_instance_id' => $instance->id,
@@ -132,7 +132,7 @@ class NativeRedmineWebhookTest extends TestCase
 
     public function test_issue_deletion_cleans_links_and_upload_queue_but_preserves_intervals(): void
     {
-        $instance = $this->instance();
+        $instance = $this->makeInstance();
         $task = Task::factory()->create();
         $otherTask = Task::factory()->create();
         RedmineTask::create([
@@ -175,7 +175,7 @@ class NativeRedmineWebhookTest extends TestCase
 
     public function test_time_synchronization_retires_uploads_queued_after_task_deletion(): void
     {
-        $instance = $this->instance();
+        $instance = $this->makeInstance();
         $task = Task::factory()->create();
         RedmineTask::create([
             'redmine_instance_id' => $instance->id,
