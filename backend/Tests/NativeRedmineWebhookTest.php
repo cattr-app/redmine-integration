@@ -4,7 +4,7 @@ namespace Modules\RedmineIntegration\Tests;
 
 use App\Models\Task;
 use App\Models\TimeInterval;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedmineTask;
@@ -15,7 +15,7 @@ use Tests\TestCase;
 
 class NativeRedmineWebhookTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     private function makeInstance(string $secret = 'abcdefghijklmnop'): RedmineInstance
     {
