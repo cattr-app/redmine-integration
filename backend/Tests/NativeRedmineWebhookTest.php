@@ -162,11 +162,10 @@ class NativeRedmineWebhookTest extends TestCase
             ['parent_id' => $otherTask->id, 'child_id' => $task->id, 'label' => 'blocks', 'weight' => 1],
             ['parent_id' => $task->id, 'child_id' => $otherTask->id, 'label' => 'blocks', 'weight' => 1],
         ]);
-        DB::table('cron_task_workers')->insert([
-            'user_id' => $user->id,
-            'task_id' => $task->id,
-            'duration' => 300,
-        ]);
+        DB::table('cron_task_workers')->updateOrInsert(
+            ['user_id' => $user->id, 'task_id' => $task->id],
+            ['duration' => 300],
+        );
 
         $body = json_encode(['type' => 'issue.deleted', 'data' => ['issue' => ['id' => 123]]], JSON_THROW_ON_ERROR);
         $this->signedRequest($instance, $body)->assertStatus(204);
