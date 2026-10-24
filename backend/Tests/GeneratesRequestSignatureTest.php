@@ -13,6 +13,7 @@ class GeneratesRequestSignatureTest extends TestCase
      * @return void
      * @throws \Exception
      */
+    #[\PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations]
     public function testGeneratesSignature()
     {
         $testKey = base64_encode(random_bytes(16));

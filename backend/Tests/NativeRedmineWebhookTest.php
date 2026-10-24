@@ -17,6 +17,13 @@ class NativeRedmineWebhookTest extends TestCase
 {
     use DatabaseTransactions;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        \Tests\Facades\UserFactory::refresh()->asAdmin()->create();
+    }
+
     private function makeInstance(string $secret = 'abcdefghijklmnop'): RedmineInstance
     {
         return RedmineInstance::create([
