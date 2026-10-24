@@ -12,12 +12,12 @@ class RedmineInstanceServiceTest extends TestCase
 {
     use DatabaseTransactions;
 
-    private function makeInstance(?string $secret): RedmineInstance
+    private function makeInstance(?string $secret, string $syncType = 'webhook'): RedmineInstance
     {
         return RedmineInstance::create([
             'url' => 'https://redmine.example.org/' . uniqid('', true),
             'api_key' => 'test-key',
-            'sync_type' => 'webhook',
+            'sync_type' => $syncType,
             'sync_new_projects' => false,
             'project_sync_interval' => 0,
             'task_sync_interval' => 0,
@@ -63,6 +63,30 @@ class RedmineInstanceServiceTest extends TestCase
 
         $this->assertTrue($updated->webhook_secret_configured);
         $this->assertSame('abcdefghijklmnop', $updated->webhook_secret);
+    }
+
+    public function test_cron_instance_without_secret_cannot_switch_to_webhook_mode_without_a_native_secret(): void
+    {
+        $instance = $this->makeInstance(null, 'cron');
+
+        $this->expectException(ValidationException::class);
+
+        app(RedmineInstanceService::class)->update($instance->id, [
+            'sync_type' => 'webhook',
+        ]);
+    }
+
+    public function test_cron_instance_can_switch_to_webhook_mode_with_a_native_secret(): void
+    {
+        $instance = $this->makeInstance(null, 'cron');
+
+        $updated = app(RedmineInstanceService::class)->update($instance->id, [
+            'sync_type' => 'webhook',
+            'webhook_secret' => 'abcdefghijklmnop',
+        ]);
+
+        $this->assertSame('webhook', $updated->sync_type);
+        $this->assertTrue($updated->webhook_secret_configured);
     }
 
     public function test_native_webhook_instance_cannot_clear_its_secret_while_in_webhook_mode(): void

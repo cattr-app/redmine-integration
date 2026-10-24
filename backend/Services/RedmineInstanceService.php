@@ -84,11 +84,14 @@ class RedmineInstanceService
         $secret = $clearSecret ? null : ($data['webhook_secret'] ?? $instance->webhook_secret);
         $syncType = $data['sync_type'] ?? $instance->sync_type;
 
-        // Instances created for the legacy webhook plugin have no per-instance secret and keep
-        // authenticating with the shared REQUEST_SIGNATURE token. They must stay editable, so the
-        // native secret is only validated once one is introduced (or already existed).
+        // Instances created for the legacy webhook plugin already run in webhook mode without a
+        // per-instance secret and authenticate with the shared REQUEST_SIGNATURE token. They must
+        // stay editable, so the native secret is only validated once one is introduced (or already
+        // existed). Switching any other instance to webhook mode still requires a native secret.
         $hadNativeSecret = $instance->webhook_secret !== null && $instance->webhook_secret !== '';
-        $keepsLegacyMode = !$hadNativeSecret && ($secret === null || $secret === '');
+        $keepsLegacyMode = $instance->sync_type === 'webhook'
+            && !$hadNativeSecret
+            && ($secret === null || $secret === '');
         if (!$keepsLegacyMode) {
             $this->validateWebhookSecret($syncType, $secret);
         }
