@@ -96,7 +96,7 @@ class NativeRedmineWebhookTest extends TestCase
     public function test_issue_deleted_soft_deletes_linked_task_and_is_idempotent(): void
     {
         $instance = $this->makeInstance();
-        $task = Task::factory()->create();
+        $task = \Tests\Facades\TaskFactory::create();
         RedmineTask::create([
             'redmine_instance_id' => $instance->id,
             'redmine_issue_id' => 123,
@@ -118,7 +118,7 @@ class NativeRedmineWebhookTest extends TestCase
     public function test_deleted_task_is_not_recreated_by_a_late_update(): void
     {
         $instance = $this->makeInstance();
-        $task = Task::factory()->create();
+        $task = \Tests\Facades\TaskFactory::create();
         RedmineTask::create([
             'redmine_instance_id' => $instance->id,
             'redmine_issue_id' => 123,
@@ -140,8 +140,8 @@ class NativeRedmineWebhookTest extends TestCase
     public function test_issue_deletion_cleans_links_and_upload_queue_but_preserves_intervals(): void
     {
         $instance = $this->makeInstance();
-        $task = Task::factory()->create();
-        $otherTask = Task::factory()->create();
+        $task = \Tests\Facades\TaskFactory::create();
+        $otherTask = \Tests\Facades\TaskFactory::create();
         RedmineTask::create([
             'redmine_instance_id' => $instance->id,
             'redmine_issue_id' => 123,
@@ -183,7 +183,7 @@ class NativeRedmineWebhookTest extends TestCase
     public function test_time_synchronization_retires_uploads_queued_after_task_deletion(): void
     {
         $instance = $this->makeInstance();
-        $task = Task::factory()->create();
+        $task = \Tests\Facades\TaskFactory::create();
         RedmineTask::create([
             'redmine_instance_id' => $instance->id,
             'redmine_issue_id' => 123,
