@@ -297,7 +297,7 @@
                             const response = await this.projectService.save(data, true);
 
                             await this.service.updateProject(id, redmineProjectId, {
-                                project_id: response.data.res.id,
+                                project_id: response.data.data.id,
                             });
                         } catch (error) {
                             this.$NotifyError(error);

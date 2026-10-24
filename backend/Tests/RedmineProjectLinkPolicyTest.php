@@ -3,11 +3,12 @@
 namespace Modules\RedmineIntegration\Tests;
 
 use Modules\RedmineIntegration\Services\RedmineProjectLinkPolicy;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class RedmineProjectLinkPolicyTest extends TestCase
 {
-    /** @dataProvider linkCases */
+    #[DataProvider('linkCases')]
     public function testAutomaticLinkPolicy(
         ?int $projectId,
         ?bool $manualUnlinked,

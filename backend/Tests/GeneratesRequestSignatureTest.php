@@ -13,13 +13,14 @@ class GeneratesRequestSignatureTest extends TestCase
      * @return void
      * @throws \Exception
      */
+    #[\PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations]
     public function testGeneratesSignature()
     {
         $testKey = base64_encode(random_bytes(16));
         $env = $this->app->environmentFilePath();
 
         $command = $this->getMockBuilder(GenerateSignature::class)
-            ->setMethods([
+            ->onlyMethods([
                 'generateRandomKey',
                 'getEnvFilePath'
             ])
