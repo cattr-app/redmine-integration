@@ -76,7 +76,7 @@ class NativeRedmineWebhookTest extends TestCase
     public function test_legacy_plugin_payload_is_accepted_for_existing_instance(): void
     {
         config()->set('redmineintegration.request.signature', 'legacy-test-token');
-        $instance = $this->instance('');
+        $instance = $this->makeInstance('');
         $body = json_encode(['payload' => ['issue' => [
             'id' => 123,
             'project' => ['id' => 4, 'name' => 'Legacy project'],
@@ -92,7 +92,7 @@ class NativeRedmineWebhookTest extends TestCase
 
     public function test_legacy_signature_rejects_missing_invalid_and_default_keys(): void
     {
-        $instance = $this->instance('');
+        $instance = $this->makeInstance('');
         $body = json_encode(['payload' => ['issue' => ['id' => 123]]], JSON_THROW_ON_ERROR);
         config()->set('redmineintegration.request.signature', 'legacy-test-token');
 
@@ -105,7 +105,7 @@ class NativeRedmineWebhookTest extends TestCase
     public function test_configured_native_secret_disables_legacy_authentication(): void
     {
         config()->set('redmineintegration.request.signature', 'legacy-test-token');
-        $instance = $this->instance();
+        $instance = $this->makeInstance();
         $body = json_encode(['payload' => ['issue' => ['id' => 123]]], JSON_THROW_ON_ERROR);
 
         $this->legacyRequest($instance, $body)->assertStatus(403);
@@ -120,7 +120,7 @@ class NativeRedmineWebhookTest extends TestCase
     public function test_legacy_payload_must_contain_issue_data(): void
     {
         config()->set('redmineintegration.request.signature', 'legacy-test-token');
-        $instance = $this->instance('');
+        $instance = $this->makeInstance('');
         $this->legacyRequest($instance, '{"payload":{}}')->assertStatus(422);
     }
 
