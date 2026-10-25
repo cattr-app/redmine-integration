@@ -82,7 +82,19 @@ class RedmineInstanceService
             throw ValidationException::withMessages(['webhook_secret' => 'Cannot replace and clear the secret together.']);
         }
         $secret = $clearSecret ? null : ($data['webhook_secret'] ?? $instance->webhook_secret);
-        $this->validateWebhookSecret($data['sync_type'] ?? $instance->sync_type, $secret);
+        $syncType = $data['sync_type'] ?? $instance->sync_type;
+
+        // Instances created for the legacy webhook plugin already run in webhook mode without a
+        // per-instance secret and authenticate with the shared REQUEST_SIGNATURE token. They must
+        // stay editable, so the native secret is only validated once one is introduced (or already
+        // existed). Switching any other instance to webhook mode still requires a native secret.
+        $hadNativeSecret = $instance->webhook_secret !== null && $instance->webhook_secret !== '';
+        $keepsLegacyMode = $instance->sync_type === 'webhook'
+            && !$hadNativeSecret
+            && ($secret === null || $secret === '');
+        if (!$keepsLegacyMode) {
+            $this->validateWebhookSecret($syncType, $secret);
+        }
         if ($clearSecret) {
             $data['webhook_secret'] = null;
         } elseif (empty($data['webhook_secret'])) {

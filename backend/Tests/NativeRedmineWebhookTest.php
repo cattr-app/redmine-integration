@@ -6,8 +6,14 @@ use App\Models\Task;
 use App\Models\TimeInterval;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use App\Models\Priority;
+use App\Models\Status;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
+use Modules\RedmineIntegration\Entities\RedminePriority;
+use Modules\RedmineIntegration\Entities\RedmineProject;
+use Modules\RedmineIntegration\Entities\RedmineStatus;
 use Modules\RedmineIntegration\Entities\RedmineTask;
+use Modules\RedmineIntegration\Entities\RedmineUser;
 use Modules\RedmineIntegration\Entities\RedmineTimeInterval;
 use Modules\RedmineIntegration\Services\RedmineTaskService;
 use Modules\RedmineIntegration\Services\RedmineTimeService;
@@ -52,6 +58,135 @@ class NativeRedmineWebhookTest extends TestCase
             ['CONTENT_TYPE' => 'application/json', 'HTTP_X_REDMINE_SIGNATURE_256' => $signature],
             $body
         );
+    }
+
+
+    private function legacyRequest(RedmineInstance $instance, string $body, ?string $signature = 'legacy-test-token')
+    {
+        $headers = ['CONTENT_TYPE' => 'application/json'];
+        if ($signature !== null) {
+            $headers['HTTP_X_REDMINE_SIGNATURE'] = $signature;
+        }
+
+        return $this->call(
+            'POST',
+            "/api/integration/redmine/{$instance->id}/webhook",
+            [],
+            [],
+            [],
+            $headers,
+            $body
+        );
+    }
+
+    public function test_legacy_plugin_payload_is_accepted_for_existing_instance(): void
+    {
+        config()->set('redmineintegration.request.signature', 'legacy-test-token');
+        $instance = $this->makeInstance('');
+        $body = json_encode(['payload' => ['issue' => [
+            'id' => 123,
+            'project' => ['id' => 4, 'name' => 'Legacy project'],
+            'status' => ['id' => 1],
+            'priority' => ['id' => 2],
+            'subject' => 'Legacy issue',
+            'assignee' => ['id' => 10],
+        ]]], JSON_THROW_ON_ERROR);
+
+        // No mapped project exists, so a valid legacy update is accepted without creating a task.
+        $this->legacyRequest($instance, $body)->assertStatus(204);
+    }
+
+    public function test_legacy_plugin_payload_creates_task_in_mapped_project_and_maps_assignee(): void
+    {
+        config()->set('redmineintegration.request.signature', 'legacy-test-token');
+        $instance = $this->makeInstance('');
+        $project = \Tests\Facades\ProjectFactory::create();
+        $assignee = \Tests\Facades\UserFactory::create();
+
+        RedmineProject::create([
+            'redmine_instance_id' => $instance->id,
+            'redmine_project_id' => 4,
+            'name' => 'Legacy project',
+            'project_id' => $project->id,
+            'manual_unlinked' => false,
+        ]);
+        $status = new RedmineStatus([
+            'redmine_instance_id' => $instance->id,
+            'redmine_status_id' => 1,
+            'name' => 'New',
+            'is_closed' => false,
+        ]);
+        $status->status_id = Status::query()->firstOrFail()->id;
+        $status->save();
+        $priority = new RedminePriority([
+            'redmine_instance_id' => $instance->id,
+            'redmine_priority_id' => 2,
+            'name' => 'Normal',
+        ]);
+        $priority->priority_id = Priority::query()->firstOrFail()->id;
+        $priority->save();
+        RedmineUser::create([
+            'redmine_instance_id' => $instance->id,
+            'redmine_user_id' => 10,
+            'user_id' => $assignee->id,
+            'api_key' => 'assignee-key',
+        ]);
+
+        $body = json_encode(['payload' => ['issue' => [
+            'id' => 123,
+            'project' => ['id' => 4, 'name' => 'Legacy project'],
+            'status' => ['id' => 1],
+            'priority' => ['id' => 2],
+            'subject' => 'Legacy issue',
+            'description' => 'Created by the legacy plugin',
+            // The historical plugin sends "assignee" instead of "assigned_to".
+            'assignee' => ['id' => 10],
+        ]]], JSON_THROW_ON_ERROR);
+
+        $this->legacyRequest($instance, $body)->assertStatus(204);
+
+        $redmineTask = RedmineTask::where(['redmine_instance_id' => $instance->id, 'redmine_issue_id' => 123])->firstOrFail();
+        $task = Task::withoutGlobalScopes()->findOrFail($redmineTask->task_id);
+        $this->assertSame('Legacy issue', $task->task_name);
+        $this->assertSame($project->id, (int) $task->project_id);
+        $this->assertSame($status->status_id, (int) $task->status_id);
+        $this->assertSame($priority->priority_id, (int) $task->priority_id);
+        $this->assertDatabaseHas('tasks_users', ['task_id' => $task->id, 'user_id' => $assignee->id]);
+        $this->assertDatabaseHas('projects_users', ['project_id' => $project->id, 'user_id' => $assignee->id]);
+    }
+
+    public function test_legacy_signature_rejects_missing_invalid_and_default_keys(): void
+    {
+        $instance = $this->makeInstance('');
+        $body = json_encode(['payload' => ['issue' => ['id' => 123]]], JSON_THROW_ON_ERROR);
+        config()->set('redmineintegration.request.signature', 'legacy-test-token');
+
+        $this->legacyRequest($instance, $body, null)->assertStatus(403);
+        $this->legacyRequest($instance, $body, 'invalid')->assertStatus(403);
+        config()->set('redmineintegration.request.signature', 'DEFAULT');
+        $this->legacyRequest($instance, $body, 'DEFAULT')->assertStatus(403);
+    }
+
+    public function test_configured_native_secret_disables_legacy_authentication(): void
+    {
+        config()->set('redmineintegration.request.signature', 'legacy-test-token');
+        $instance = $this->makeInstance();
+        $body = json_encode(['payload' => ['issue' => ['id' => 123]]], JSON_THROW_ON_ERROR);
+
+        $this->legacyRequest($instance, $body)->assertStatus(403);
+        // A malformed native signature must not fall back to an otherwise valid legacy header.
+        $this->call('POST', "/api/integration/redmine/{$instance->id}/webhook", [], [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_X_REDMINE_SIGNATURE_256' => 'sha256=invalid',
+            'HTTP_X_REDMINE_SIGNATURE' => 'legacy-test-token',
+        ], $body)->assertStatus(403);
+    }
+
+    public function test_legacy_payload_must_contain_issue_data(): void
+    {
+        config()->set('redmineintegration.request.signature', 'legacy-test-token');
+        $instance = $this->makeInstance('');
+        $this->legacyRequest($instance, '{"payload":{}}')->assertStatus(422);
     }
 
     public function test_signature_required_and_validated(): void

@@ -17,14 +17,29 @@ class RedmineWebhookController extends BaseController
     public function webhook(Request $request, RedmineInstance $instance): Response
     {
         $json = $request->json()->all();
-        $event = $json['type'] ?? null;
+        $source = $request->attributes->get('redmine_webhook_source');
 
-        // Accept unrelated Redmine events without trying to import them as issues.
-        if (!in_array($event, ['issue.created', 'issue.updated', 'issue.deleted'], true)) {
-            return response('', 204);
+        if ($source === 'legacy') {
+            // The historical Redmine plugin sends payload.issue and uses "assignee".
+            $issue = $json['payload']['issue'] ?? null;
+            if (is_array($issue) && !isset($issue['assigned_to']) && isset($issue['assignee'])) {
+                $issue['assigned_to'] = $issue['assignee'];
+            }
+            $event = 'issue.updated';
+        } else {
+            // Native Redmine 7 sends a signed type + data.issue envelope.
+            $event = $json['type'] ?? null;
+            if (!is_string($event)) {
+                return response('Invalid webhook payload', 422);
+            }
+
+            // Accept unrelated native events without importing them as issues.
+            if (!in_array($event, ['issue.created', 'issue.updated', 'issue.deleted'], true)) {
+                return response('', 204);
+            }
+            $issue = $json['data']['issue'] ?? null;
         }
 
-        $issue = $json['data']['issue'] ?? null;
         if (!is_array($issue) || !isset($issue['id']) || !filter_var($issue['id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
             return response('Invalid issue payload', 422);
         }
