@@ -50,7 +50,7 @@ class EventObserver
                 $redmineProject->redmine_project_id,
                 $redmineUsers->all(),
                 $redminePriority->redmine_priority_id,
-                $data[0]
+                $data
             );
         }
     }
