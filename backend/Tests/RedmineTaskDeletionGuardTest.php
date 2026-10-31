@@ -2,7 +2,6 @@
 
 namespace Modules\RedmineIntegration\Tests;
 
-use App\Models\Task;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedmineTask;
 use Tests\Facades\TaskFactory;
