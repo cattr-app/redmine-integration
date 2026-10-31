@@ -47,14 +47,6 @@ class RedmineGroupUser extends Model
         'redmine_user_id' => 'integer',
     ];
 
-    /**
-     * @var array
-     */
-    protected $dates = [
-        'created_at',
-        'redmine_user_id',
-    ];
-
     /*public function group(): BelongsTo
     {
         return $this->belongsTo(RedmineGroup::class, 'redmine_group_id');
