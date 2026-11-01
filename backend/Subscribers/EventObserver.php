@@ -111,7 +111,7 @@ class EventObserver
             'event.before.action.projects.edit' => [[__CLASS__, 'projectEdition']],
             'event.before.action.projects_members.edit' => [[__CLASS__, 'projectMemberEdition']],
             'event.after.action.tasks.edit' => [[__CLASS__, 'taskEditionAfter']],
-            'event.before.action.task.destroy' => [[__CLASS__, 'taskDeletion']],
+            'event.before.action.tasks.destroy' => [[__CLASS__, 'taskDeletion']],
             'event.after.action.intervals.create' => [[__CLASS__, 'intervalCreation']]
         ];
     }
