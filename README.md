@@ -6,7 +6,7 @@ For instance management, user authorization, and interface setup, see the [front
 
 ## Requirements
 
-This module runs inside Cattr, using its models, services, database, and scheduler. It has no standalone application or build. The backend manifest specifies a minimum core version of `4.0`; choose a module release compatible with your server version.
+This module runs inside Cattr, using its models, services, database, and scheduler. It has no standalone application or build. The backend manifest specifies a minimum core version of `4.0`; the installation and activation steps below target **Cattr Server 4.1.0+**. For older Cattr versions, follow the corresponding server release's module instructions.
 
 Use the PHP and Composer versions required by your Cattr server. PHP SimpleXML is required; Composer installs `kbsali/redmine-api`. Configure a reachable Redmine instance with REST API access. Redmine 7.0.2 has built-in webhooks. Native webhook mode requires an instance-specific secret (at least 16 characters). Existing older Redmine installations may continue using their installed webhook plugin and legacy shared signature.
 
@@ -15,40 +15,48 @@ Use the PHP and Composer versions required by your Cattr server. PHP SimpleXML i
 After the repository has been registered on Packagist and a compatible release is available, run from the **server-application** root:
 
 ```bash
-composer require cattr/redmine-integration-module
+composer require cattr/redmine_integration-module
 ```
 
 The Composer package is rooted at this repository's `composer.json`, with PHP sources under `backend/`. Cattr must scan Composer modules under `vendor/*/*` (as configured in its `config/modules.php`). Enable the module using the configuration below. Choose an explicit version constraint when maintaining a deployment.
 
 ## Installation from Source
 
-Run from the **server-application** root:
+For local development, check out the integration alongside the **server-application** directory and register it as a Composer path repository:
 
 ```bash
-git clone https://github.com/cattr-app/redmine-integration.git modules/CattrRedmineIntegration
-composer update --lock
+git clone https://github.com/cattr-app/redmine-integration.git ../redmine-integration
+composer config repositories.redmine path ../redmine-integration
+composer require cattr/redmine_integration-module:@dev
 ```
 
-Cattr's Composer merge configuration includes `modules/*/composer.json`. The module maps `Modules\RedmineIntegration\` to `backend/`. Install either the source checkout or the Composer package to avoid duplicate module discovery.
+Run these commands from the **server-application** root. If the integration is already checked out, skip `git clone`. The local path repository setting is for development; do not commit it to the server repository.
+
+Cattr 4.1+ discovers backend modules installed through Composer under `vendor/*/*`. Simply cloning the module into `modules/` or running `composer update --lock` does not install its dependencies or register its autoloading. Choose either a published Composer package or the path repository, not both.
 
 ## Enable and Configure
 
-Add this entry to the server's `modules.json`, preserving existing entries:
+External backend and frontend modules are **disabled by default** in Cattr Server 4.1+. Install and register each side independently, then set these environment variables for the Cattr deployment:
 
-```json
-{
-  "CattrRedmineIntegration": true
-}
+```dotenv
+MODULE_BACKEND_CATTR_REDMINE_INTEGRATION_ENABLED=true
+MODULE_FRONTEND_AMAZING_CAT_REDMINE_INTEGRATION_ENABLED=true
 ```
 
-`CattrRedmineIntegration` is the backend module name; `cattr_redmine_integration` is its alias. If it was disabled through Cattr's module configuration, enable it explicitly:
+Only the exact lowercase value `true` enables a module. `module.json`'s `active` field and legacy `modules*.json` settings do not control activation; `php artisan module:enable` is no longer supported. The flags enable installed modules but do not install missing packages or add them to a container image.
+
+For container deployments, provide the backend flag consistently to application, queue, scheduler, and migration roles, and recreate containers after changing their environment. Custom modules must be included in the image at build time; see [Cattr's module deployment guide](https://github.com/cattr-app/server-application/blob/main/CONTRIBUTING.md#building-an-image-with-modules).
+
+Apply the module's migrations from the **server-application** root:
 
 ```bash
-php artisan module:enable CattrRedmineIntegration
 php artisan migrate
+php artisan module:list
 ```
 
-Restart the Cattr processes, including Octane and the scheduler, after configuration changes. Install and register the [frontend module](frontend/README.md), then configure Redmine instances, synchronization intervals, and mappings in the interface. Users authorize their Redmine accounts through their settings.
+Restart Cattr processes, including Octane and the scheduler, after configuration changes. [Install and register the frontend package](frontend/README.md), then rebuild the frontend assets. Configure Redmine instances, synchronization intervals, and mappings in the interface. Users authorize their Redmine accounts through their settings.
+
+See [Cattr's module activation flag reference](https://github.com/cattr-app/server-application/blob/main/docs/dev/module-activation-flags.md) for naming and behavior.
 
 For Redmine 7 native webhooks, configure the same secret (at least 16 characters) in both the Redmine webhook and the corresponding Cattr instance. Secrets are encrypted at rest and are never included in the instance API response; updating with an empty field keeps the existing secret. Configure these Redmine events: `issue.created`, `issue.updated`, and `issue.deleted`. The endpoint is `/api/integration/redmine/{instance}/webhook`, where `{instance}` is the Cattr Redmine instance ID. Redmine signs the raw JSON body with HMAC-SHA256 and sends `X-Redmine-Signature-256: sha256=<hex digest>`. The endpoint rejects invalid or missing signatures with HTTP 403. Existing legacy webhook plugin deliveries remain supported with their configured static signature token; see the backward-compatibility section below. Deleting an issue soft-deletes its linked Cattr task by setting `tasks.deleted_at`; it retains task mapping and recorded time history. Repeat deletion events are idempotent.
 
@@ -95,7 +103,7 @@ module.json                  # Cattr backend manifest
 .github/workflows/npm-publish.yml
 ```
 
-Register `https://github.com/cattr-app/redmine-integration` on Packagist as `cattr/redmine-integration-module` and configure the GitHub integration/webhook for updates. Composer versions come from Git tags; no hardcoded Composer version is needed. The obsolete GitLab Composer publication job has been removed.
+Register `https://github.com/cattr-app/redmine-integration` on Packagist as `cattr/redmine_integration-module` and configure the GitHub integration/webhook for updates. Composer versions come from Git tags; no hardcoded Composer version is needed. The obsolete GitLab Composer publication job has been removed.
 
 The initial npm version `0.0.0` is published manually by the maintainer. Subsequent npm releases use GitHub Releases and OIDC; see the [frontend publishing instructions](frontend/README.md#publishing).
 
