@@ -8,64 +8,57 @@ Use it together with the [backend module](https://github.com/cattr-app/redmine-i
 
 The package runs inside Cattr's frontend and uses its Vue runtime, frontend aliases, services, and webpack module loader. It ships JavaScript, Vue components, and localization files for compilation by Cattr; it has no standalone build.
 
-This repository uses Node.js 24 (`.nvmrc`) and pnpm 10.34.5 (`packageManager`). Use the build tools required by your Cattr server when rebuilding the host application.
+This repository uses Node.js 24 (`.nvmrc`) and pnpm 12.8.2 (`packageManager`). Use the Node.js and pnpm versions required by the host Cattr server when building its frontend (Cattr Server 4.1.0 uses Node.js 24 and pnpm 12).
 
 ## Installation from npm
 
-After the package is published, run from the **server-application** root:
+From the **server-application** root, install the package:
 
 ```bash
 pnpm add @amazingcat/cattr-redmine-integration
 ```
 
-Add this entry to `resources/frontend/etc/modules.local.json`, preserving existing settings:
+Register it in `resources/frontend/etc/modules.config.json` (or a local configuration overlay), preserving existing entries:
 
 ```json
 {
   "AmazingCat_RedmineIntegration": {
     "type": "package",
-    "ref": "@amazingcat/cattr-redmine-integration",
-    "enabled": true
+    "ref": "@amazingcat/cattr-redmine-integration"
   }
 }
 ```
 
-For configuration tracked by your deployment repository, use `modules.config.json` or the configuration for the relevant environment instead of the local file. Choose a package version compatible with the backend and rebuild the interface:
+The registration key must match `ModuleConfig.moduleName` (`AmazingCat_RedmineIntegration`) so Cattr resolves the correct activation flag. Registration controls which module is bundled; the old `enabled` setting does **not** activate it in Cattr Server 4.1+.
+
+Set the frontend activation flag in the Cattr deployment environment:
+
+```dotenv
+MODULE_FRONTEND_AMAZING_CAT_REDMINE_INTEGRATION_ENABLED=true
+```
+
+Only the exact lowercase value `true` enables the module. The backend must be installed separately and enabled with `MODULE_BACKEND_CATTR_REDMINE_INTEGRATION_ENABLED=true`; see the [backend installation guide](../README.md#enable-and-configure).
+
+Rebuild the host frontend from the **server-application** root:
 
 ```bash
 pnpm install
 pnpm prod
 ```
+
+In containers, a package must be present during the image build and registered in the frontend module configuration. The environment flag alone does not install it. See [building a Cattr image with modules](https://github.com/cattr-app/server-application/blob/main/CONTRIBUTING.md#building-an-image-with-modules).
 
 ## Installation from Source
 
-These commands run from the **server-application** root and assume the repository is checked out at `modules/CattrRedmineIntegration`, as described in the [backend README](https://github.com/cattr-app/redmine-integration#installation-from-source).
+For local development, check out the repository alongside **server-application** as described in the [backend README](../README.md#installation-from-source), then link its frontend package:
 
 ```bash
-mkdir -p resources/frontend/vendor_modules/AmazingCat
-ln -s ../../../../modules/CattrRedmineIntegration/frontend resources/frontend/vendor_modules/AmazingCat/RedmineIntegration
+pnpm link ../redmine-integration/frontend
 ```
 
-Register the local module in `resources/frontend/etc/modules.local.json`:
+Run this command from the **server-application** root. Register the package with the same `type: "package"` and `ref: "@amazingcat/cattr-redmine-integration"` configuration shown above, enable the frontend flag, and rebuild with `pnpm prod`. The link supplies local source files; publication to npm is not required.
 
-```json
-{
-  "AmazingCat_RedmineIntegration": {
-    "type": "local",
-    "ref": "AmazingCat_RedmineIntegration",
-    "enabled": true
-  }
-}
-```
-
-Install the server's dependencies and rebuild:
-
-```bash
-pnpm install
-pnpm prod
-```
-
-Use one installation method at a time. Publishing to npm is not required for source installation.
+Use either the published npm package or the local package link, not both.
 
 ## Verification
 
@@ -78,7 +71,7 @@ nvm install
 nvm use
 corepack enable
 pnpm install --frozen-lockfile
-npm pack --dry-run
+pnpm pack --dry-run
 ```
 
 The npm package includes this README, `LICENSE`, `module.init.js`, `components/`, `locales/`, `sections/`, and `services/`. Backend files and development configuration are excluded by the package's `files` allowlist.
@@ -101,7 +94,7 @@ For subsequent releases, publish a GitHub Release for a SemVer tag such as `v0.0
 
 Regular releases publish with the npm dist-tag `latest`. GitHub prereleases and versions with a SemVer prerelease suffix publish with `next`. Each version can be published only once, so do not run the release workflow for the manually published `0.0.0` version.
 
-The workflow uses Node 24, npm 11, a GitHub-hosted runner, and `id-token: write`. It invokes `npm publish` directly with OIDC; no `NPM_TOKEN` or `NODE_AUTH_TOKEN` secret is needed. Package contents are checked with `npm pack --dry-run` before publication. The old Yarn and GitLab registry settings have been removed.
+The workflow uses Node 24, npm 11, a GitHub-hosted runner, and `id-token: write`. It invokes `npm publish` directly with OIDC; no `NPM_TOKEN` or `NODE_AUTH_TOKEN` secret is needed. Package contents are checked with `pnpm pack --dry-run` before publication. The old Yarn and GitLab registry settings have been removed.
 
 ## License
 
