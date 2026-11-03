@@ -2,16 +2,16 @@
 
 namespace Modules\RedmineIntegration\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\CattrFormRequest;
 
-class UpdateRedmineStatus extends FormRequest
+class UpdateRedmineStatus extends CattrFormRequest
 {
     /**
      * Get the validation rules that apply to the request.
      *
      * @return array
      */
-    public function rules(): array
+    protected function _rules(): array
     {
         return [
             'status_id' => 'required|integer',
@@ -23,7 +23,7 @@ class UpdateRedmineStatus extends FormRequest
      *
      * @return bool
      */
-    public function authorize(): bool
+    protected function _authorize(): bool
     {
         return true;
     }
