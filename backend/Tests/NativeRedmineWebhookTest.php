@@ -6,6 +6,8 @@ use App\Models\Task;
 use App\Models\TimeInterval;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Models\Project;
 use App\Models\Priority;
 use App\Models\Status;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
@@ -340,5 +342,111 @@ class NativeRedmineWebhookTest extends TestCase
 
         $this->assertDatabaseMissing('redmine_time_intervals', ['time_interval_id' => $interval->id]);
         $this->assertDatabaseHas('time_intervals', ['id' => $interval->id, 'deleted_at' => null]);
+    }
+
+    private function seedStatusAndPriority(RedmineInstance $instance): void
+    {
+        $status = new RedmineStatus([
+            'redmine_instance_id' => $instance->id,
+            'redmine_status_id' => 1,
+            'name' => 'New',
+            'is_closed' => false,
+        ]);
+        $status->status_id = Status::query()->firstOrFail()->id;
+        $status->save();
+
+        $priority = new RedminePriority([
+            'redmine_instance_id' => $instance->id,
+            'redmine_priority_id' => 2,
+            'name' => 'Normal',
+        ]);
+        $priority->priority_id = Priority::query()->firstOrFail()->id;
+        $priority->save();
+    }
+
+    private function unlinkedProjectIssue(): array
+    {
+        return [
+            'project' => ['id' => 7, 'name' => 'Unlinked project'],
+            'status' => ['id' => 1],
+            'priority' => ['id' => 2],
+            'subject' => 'Issue in unlinked project',
+        ];
+    }
+
+    private function makeUnlinkedRelation(RedmineInstance $instance, bool $manualUnlinked): RedmineProject
+    {
+        return RedmineProject::create([
+            'redmine_instance_id' => $instance->id,
+            'redmine_project_id' => 7,
+            'name' => 'Unlinked project',
+            'project_id' => null,
+            'manual_unlinked' => $manualUnlinked,
+        ]);
+    }
+
+    public function test_webhook_links_existing_unlinked_project_when_new_project_sync_is_enabled(): void
+    {
+        $instance = $this->makeInstance();
+        $instance->sync_new_projects = true;
+        $instance->save();
+        $this->seedStatusAndPriority($instance);
+        $relation = $this->makeUnlinkedRelation($instance, false);
+
+        app(RedmineTaskService::class)->createTaskFromWebhook($instance, 321, $this->unlinkedProjectIssue());
+
+        $relation->refresh();
+        $this->assertNotNull($relation->project_id);
+        $project = Project::withoutGlobalScopes()->findOrFail($relation->project_id);
+        $this->assertSame('redmine', $project->source);
+
+        $redmineTask = RedmineTask::where(['redmine_instance_id' => $instance->id, 'redmine_issue_id' => 321])->firstOrFail();
+        $task = Task::withoutGlobalScopes()->findOrFail($redmineTask->task_id);
+        $this->assertSame('Issue in unlinked project', $task->task_name);
+        $this->assertSame($project->id, (int) $task->project_id);
+    }
+
+    public function test_webhook_logs_skipped_task_for_unlinked_project_when_new_project_sync_is_disabled(): void
+    {
+        Log::spy();
+        $instance = $this->makeInstance();
+        $this->seedStatusAndPriority($instance);
+        $relation = $this->makeUnlinkedRelation($instance, false);
+        $projectCount = Project::withoutGlobalScopes()->count();
+
+        app(RedmineTaskService::class)->createTaskFromWebhook($instance, 321, $this->unlinkedProjectIssue());
+
+        $this->assertNull($relation->refresh()->project_id);
+        $this->assertSame($projectCount, Project::withoutGlobalScopes()->count());
+        $this->assertDatabaseMissing('redmine_tasks', ['redmine_instance_id' => $instance->id, 'redmine_issue_id' => 321]);
+        Log::shouldHaveReceived('warning')->once()->withArgs(
+            fn (string $message, array $context) => $context['redmine_instance_id'] === $instance->id
+                && $context['redmine_issue_id'] === 321
+                && $context['redmine_project_id'] === 7
+                && $context['sync_new_projects'] === false
+        );
+    }
+
+    public function test_webhook_does_not_relink_manually_unlinked_project_and_logs_skip(): void
+    {
+        Log::spy();
+        $instance = $this->makeInstance();
+        $instance->sync_new_projects = true;
+        $instance->save();
+        $this->seedStatusAndPriority($instance);
+        $relation = $this->makeUnlinkedRelation($instance, true);
+        $projectCount = Project::withoutGlobalScopes()->count();
+
+        app(RedmineTaskService::class)->createTaskFromWebhook($instance, 321, $this->unlinkedProjectIssue());
+
+        $this->assertNull($relation->refresh()->project_id);
+        $this->assertSame($projectCount, Project::withoutGlobalScopes()->count());
+        $this->assertDatabaseMissing('redmine_tasks', ['redmine_instance_id' => $instance->id, 'redmine_issue_id' => 321]);
+        Log::shouldHaveReceived('warning')->once()->withArgs(
+            fn (string $message, array $context) => $context['redmine_instance_id'] === $instance->id
+                && $context['redmine_issue_id'] === 321
+                && $context['redmine_project_id'] === 7
+                && $context['manual_unlinked'] === true
+        );
     }
 }

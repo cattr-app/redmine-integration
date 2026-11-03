@@ -8,6 +8,7 @@ use App\Models\Task;
 use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Modules\RedmineIntegration\Entities\RedmineGroup;
 use Modules\RedmineIntegration\Entities\RedmineInstance;
 use Modules\RedmineIntegration\Entities\RedminePriority;
@@ -253,8 +254,19 @@ class RedmineTaskService
             return $mapping;
         });
 
-        // Do not recreate a deliberately deleted Cattr project.
+        // Do not create or recreate a project the link policy rejects, or one deliberately
+        // deleted in Cattr, but make the skipped webhook observable.
         if (!$redmineProject->project) {
+            Log::warning('Redmine webhook task skipped: Redmine project is not linked to a Cattr project', [
+                'redmine_instance_id' => $redmineInstance->id,
+                'redmine_issue_id' => $redmineIssueId,
+                'redmine_project_id' => $redmineProject->redmine_project_id,
+                'project_id' => $redmineProject->project_id,
+                'manual_unlinked' => $redmineProject->manual_unlinked,
+                'sync_type' => $redmineInstance->sync_type,
+                'sync_new_projects' => (bool) $redmineInstance->sync_new_projects,
+            ]);
+
             return;
         }
 
