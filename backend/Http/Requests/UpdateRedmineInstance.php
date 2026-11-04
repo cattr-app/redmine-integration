@@ -2,16 +2,16 @@
 
 namespace Modules\RedmineIntegration\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\CattrFormRequest;
 
-class UpdateRedmineInstance extends FormRequest
+class UpdateRedmineInstance extends CattrFormRequest
 {
     /**
      * Get the validation rules that apply to the request.
      *
      * @return array
      */
-    public function rules(): array
+    protected function _rules(): array
     {
         return [
             'url' => 'required|url|max:256',
@@ -35,7 +35,7 @@ class UpdateRedmineInstance extends FormRequest
      *
      * @return bool
      */
-    public function authorize(): bool
+    protected function _authorize(): bool
     {
         return true;
     }
