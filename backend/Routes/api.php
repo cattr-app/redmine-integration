@@ -48,6 +48,8 @@ Route::group(['middleware' => 'auth:sanctum'], static function (Router $router) 
            ->name('redmine-projects.show');
     $router->put('/instances/{instanceId}/projects/{id}', [RedmineProjectController::class, 'update'])
            ->name('redmine-projects.update');
+    $router->post('/instances/{instanceId}/projects/{id}/create-project', [RedmineProjectController::class, 'createProject'])
+           ->name('redmine-projects.create-project');
 
     // Redmine users
     $router->post('/instances/{instanceId}/users', [RedmineUserController::class, 'create'])

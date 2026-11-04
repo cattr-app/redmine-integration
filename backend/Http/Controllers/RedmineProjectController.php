@@ -5,7 +5,9 @@ namespace Modules\RedmineIntegration\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Modules\RedmineIntegration\Entities\RedmineProject;
+use Modules\RedmineIntegration\Http\Requests\CreateRedmineLinkedProject;
 use Modules\RedmineIntegration\Http\Requests\UpdateRedmineProject;
+use Modules\RedmineIntegration\Services\RedmineProjectService;
 
 class RedmineProjectController extends AbstractRedmineController
 {
@@ -53,6 +55,24 @@ class RedmineProjectController extends AbstractRedmineController
 
             return $item;
         });
+
+        return response()->json($item);
+    }
+
+    public function createProject(
+        CreateRedmineLinkedProject $request,
+        RedmineProjectService $service,
+        $instanceId,
+        $id
+    ): JsonResponse {
+        $data = $request->validated();
+
+        $item = $service->createLinkedProject(
+            (int) $instanceId,
+            (int) $id,
+            $data['name'] ?? null,
+            $data['description'] ?? null
+        );
 
         return response()->json($item);
     }

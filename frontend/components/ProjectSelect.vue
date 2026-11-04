@@ -9,7 +9,7 @@
             filterable
             @on-change="handleProjectChange"
         >
-            <at-option value="new">{{ $t('project_select.create_new') }}</at-option>
+            <at-option v-if="!redmineProject.project_id" value="new">{{ $t('project_select.create_new') }}</at-option>
             <at-option v-for="project in projects" :key="project.id" :value="+project.id">
                 {{ project.name }}
             </at-option>

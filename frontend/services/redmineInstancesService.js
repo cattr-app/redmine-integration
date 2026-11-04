@@ -156,6 +156,21 @@ export default class RedmineInstancesService {
     }
 
     /**
+     * Create a Redmine-sourced Cattr project and link it to the Redmine project
+     * @param instanceId
+     * @param id
+     * @param payload
+     * @returns {Promise<void>}
+     */
+    async createProject(instanceId, id, payload) {
+        const { data } = await axios.post(
+            `${this.getItemRequestUri()}/${instanceId}/projects/${id}/create-project`,
+            payload,
+        );
+        return data;
+    }
+
+    /**
      * Create item
      * @param instanceId
      * @param payload
