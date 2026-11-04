@@ -88,8 +88,10 @@ class RedmineProjectService
                 ]);
             }
 
-            $name = $name ?? $mapping->name;
-            $mapping->project_id = $this->createRedmineSourcedProject($name, $description ?? $name)->id;
+            $mapping->project_id = $this->createRedmineSourcedProject(
+                $name ?? $mapping->name,
+                $description ?? $mapping->name
+            )->id;
             $mapping->manual_unlinked = false;
             $mapping->save();
 

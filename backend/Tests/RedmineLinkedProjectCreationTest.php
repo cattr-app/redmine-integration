@@ -85,6 +85,19 @@ class RedmineLinkedProjectCreationTest extends TestCase
         $this->assertSame('Default name', $project->description);
     }
 
+    public function test_omitted_description_defaults_to_redmine_project_name_when_name_is_given(): void
+    {
+        $this->actingAsAdmin();
+        $instance = $this->makeInstance();
+        $mapping = $this->makeMapping($instance, ['name' => 'Redmine name']);
+
+        $this->postJson($this->uri($instance->id, $mapping->id), ['name' => 'Custom name'])->assertOk();
+
+        $project = $mapping->refresh()->project;
+        $this->assertSame('Custom name', $project->getRawOriginal('name'));
+        $this->assertSame('Redmine name', $project->description);
+    }
+
     public function test_manually_unlinked_mapping_can_be_linked_to_a_new_project(): void
     {
         $this->actingAsAdmin();
